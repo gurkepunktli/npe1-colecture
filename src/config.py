@@ -36,5 +36,8 @@ class Config(BaseModel):
     flux_model: str = "flux-2-pro"
     gemini_image_model: str = "google/gemini-2.5-flash-image-preview"
 
+    # Public base URL for serving generated images (optional)
+    public_base_url: Optional[str] = os.getenv("PUBLIC_BASE_URL")
+
 
 config = Config()

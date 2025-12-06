@@ -141,7 +141,11 @@ class ImageOrchestrator:
             if image_url.startswith("data:"):
                 try:
                     image_id = generated_cache.store_data_url(image_url)
-                    served_url = f"/generated/{image_id}"
+                    path = f"/generated/{image_id}"
+                    if getattr(config, "public_base_url", None):
+                        served_url = f"{config.public_base_url.rstrip('/')}{path}"
+                    else:
+                        served_url = path
                 except Exception as exc:
                     print(f"Failed to cache data URL: {exc}")
 
