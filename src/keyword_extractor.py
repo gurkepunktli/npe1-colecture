@@ -59,13 +59,29 @@ Antwort mit 2-3 Keywords. Bspw. "Hund, Wiese", nicht mehr. Es muss genau so gean
         Returns:
             Tuple of (detailed extraction result, refined keywords string)
         """
-        # Build text from slide
-        text_parts = [slide.title]
+        # If keywords were explicitly provided, skip LLM extraction/refinement
+        if slide.unsplashSearchTerms:
+            explicit_keywords = [k for k in slide.unsplashSearchTerms if k]
+            extraction_obj = KeywordExtractionResult(
+                skip=False,
+                english_keywords=explicit_keywords,
+                topics_de=[],
+                style=[],
+                negative_keywords=[],
+                constraints={}
+            )
+            refined_keywords = ", ".join(explicit_keywords[:3]) if explicit_keywords else ""
+            return extraction_obj, refined_keywords
+
+        # Build text from slide (title is optional)
+        text_parts = []
+        if slide.title:
+            text_parts.append(slide.title)
         if slide.bullets:
             for bullet in slide.bullets:
                 text_parts.append(bullet.get("bullet", ""))
 
-        text = " ".join(text_parts)
+        text = " ".join([part for part in text_parts if part]).strip()
 
         # Step 1: Extract detailed keywords
         extraction_chain = self.extraction_prompt | self.llm | StrOutputParser()

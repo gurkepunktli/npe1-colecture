@@ -13,7 +13,7 @@ class ColorConfig(BaseModel):
 class SlideInput(BaseModel):
     """Input data for a single slide."""
 
-    title: str
+    title: Optional[str] = None
     sources: Optional[List[Dict[str, str]]] = None
     unsplashSearchTerms: Optional[List[str]] = None
     bullets: Optional[List[Dict[str, Any]]] = None

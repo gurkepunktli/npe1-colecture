@@ -56,7 +56,7 @@ async def generate_image(slide: SlideInput):
 
 @app.get("/generate-image-simple", response_model=ImageResult)
 async def generate_image_simple(
-    title: str = Query(..., description="Slide title"),
+    title: Optional[str] = Query(None, description="Slide title (optional if keywords provided)"),
     style: Optional[str] = Query(None, description="Comma-separated style values (e.g., 'modern,minimal')"),
     image_mode: str = Query("auto", description="Image mode: stock_only, ai_only, or auto"),
     ai_model: str = Query("flux", description="AI model: flux or banana"),
