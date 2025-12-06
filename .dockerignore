@@ -37,7 +37,8 @@ TESTING.md
 # Docker files
 Dockerfile
 docker-compose*.yml
-.dockerignore
+# Note: NOT excluding .dockerignore itself to debug
+# .dockerignore
 
 # Temporary
 *.tmp
