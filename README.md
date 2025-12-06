@@ -138,6 +138,18 @@ src/
 └── api.py              # FastAPI application
 ```
 
+## Deployment
+
+### Portainer
+
+Siehe detaillierte Anleitung: [PORTAINER.md](PORTAINER.md)
+
+**Quick Start:**
+1. Portainer → Stacks → Add stack
+2. Git Repository: `https://github.com/gurkepunktli/npe1-colecture`
+3. Environment Variables mit API Keys konfigurieren
+4. Deploy
+
 ## License
 
 TBD
