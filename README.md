@@ -196,6 +196,8 @@ Response:
 ```
 
 ### Generate Image
+
+**Basis-Request:**
 ```bash
 POST http://localhost:8080/generate-image
 Content-Type: application/json
@@ -210,6 +212,44 @@ Content-Type: application/json
 }
 ```
 
+**Erweitert mit allen Features:**
+```bash
+POST http://localhost:8080/generate-image
+Content-Type: application/json
+
+{
+  "title": "Digital Transformation",
+  "bullets": [
+    {"bullet": "Cloud Migration", "sub": []},
+    {"bullet": "AI Integration", "sub": []}
+  ],
+  "style": ["modern", "minimal", "professional"],
+  "image_mode": "ai_only",
+  "ai_model": "imagen",
+  "colors": {
+    "primary": "#0066CC",
+    "secondary": "#00CC66"
+  }
+}
+```
+
+**Parameter-Übersicht:**
+
+| Parameter | Typ | Default | Beschreibung |
+|-----------|-----|---------|--------------|
+| `title` | string | **required** | Folientitel |
+| `bullets` | array | optional | Bullet points mit Sub-Items |
+| `unsplashSearchTerms` | array | optional | Vordefinierte Keywords (überschreibt Auto-Extraktion) |
+| `style` | array | optional | Style-Vorgaben (z.B. `["minimal", "modern", "corporate"]`) |
+| `image_mode` | string | `"auto"` | Bildquelle: `"stock_only"`, `"ai_only"`, `"auto"` |
+| `ai_model` | string | `"flux"` | KI-Modell: `"flux"` oder `"imagen"` |
+| `colors` | object | optional | Farbschema: `{"primary": "...", "secondary": "..."}` |
+
+**Image Modes:**
+- `stock_only`: Nur Stock-Fotos, keine KI-Generierung
+- `ai_only`: Nur KI-Generierung, keine Stock-Suche
+- `auto`: Stock-Fotos bevorzugen, bei Bedarf KI-Generierung (Standard)
+
 Response:
 ```json
 {
@@ -223,6 +263,9 @@ Mögliche `source` Werte:
 - `stock_unsplash` - Gefunden auf Unsplash
 - `stock_pexels` - Gefunden auf Pexels
 - `generated_flux` - KI-generiert mit FLUX
+- `generated_imagen` - KI-generiert mit Google Imagen
+- `none` - Keine passenden Bilder gefunden (stock_only Mode)
+- `failed` - Generierung fehlgeschlagen
 
 ### Extract Keywords (Debug)
 ```bash
