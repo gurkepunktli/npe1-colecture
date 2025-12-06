@@ -71,3 +71,4 @@ class ImageResult(BaseModel):
     url: str
     source: str  # "stock" or "generated"
     keywords: str
+    error: Optional[str] = None

@@ -140,12 +140,15 @@ class ImageOrchestrator:
             return ImageResult(
                 url=image_url,
                 source=source,
-                keywords=keywords
+                keywords=keywords,
+                error=None
             )
         else:
-            print("Image generation failed")
+            error_detail = self.image_generator.last_error or "Image generation failed"
+            print(f"Image generation failed: {error_detail}")
             return ImageResult(
                 url="",
                 source="failed",
-                keywords=keywords
+                keywords=keywords,
+                error=error_detail
             )

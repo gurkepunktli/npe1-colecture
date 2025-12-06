@@ -15,6 +15,7 @@ class ImageGenerator:
 
     def __init__(self):
         """Initialize the image generator."""
+        self.last_error: Optional[str] = None
         self.llm = ChatOpenAI(
             model=config.claude_model,
             openai_api_base="https://openrouter.ai/api/v1",
@@ -50,6 +51,7 @@ Antworte mit genau einem Satz."""),
         Returns:
             Generated prompt for image generation
         """
+        self.last_error = None
         # Build style instruction
         style_instruction = ""
         if style:
@@ -73,7 +75,10 @@ Antworte mit genau einem Satz."""),
             "style_instruction": style_instruction,
             "color_instruction": color_instruction
         })
-        return prompt.strip()
+            return prompt.strip()
+        except Exception as e:
+            self.last_error = f"Prompt generation failed: {e}"
+            raise
 
     async def generate_with_flux(
         self,
@@ -93,6 +98,7 @@ Antworte mit genau einem Satz."""),
             URL of generated image or None if failed
         """
         try:
+            self.last_error = None
             async with httpx.AsyncClient(timeout=120.0) as client:
                 # Submit generation request
                 response = await client.post(
@@ -139,7 +145,9 @@ Antworte mit genau einem Satz."""),
                 return None
 
         except Exception as e:
-            print(f"FLUX generation failed: {e}")
+            msg = f"FLUX generation failed: {e}"
+            self.last_error = msg
+            print(msg)
             return None
 
     async def generate_with_imagen(
@@ -160,6 +168,7 @@ Antworte mit genau einem Satz."""),
             URL of generated image or None if failed
         """
         try:
+            self.last_error = None
             headers = {
                 "Authorization": f"Bearer {config.openrouter_api_key}",
                 "Content-Type": "application/json"
@@ -193,7 +202,9 @@ Antworte mit genau einem Satz."""),
                 return None
 
         except Exception as e:
-            print(f"Imagen generation failed: {e}")
+            msg = f"Gemini image generation failed: {e}"
+            self.last_error = msg
+            print(msg)
             return None
 
     async def generate_image(
@@ -215,12 +226,14 @@ Antworte mit genau einem Satz."""),
         Returns:
             URL of generated image or None if failed
         """
+        self.last_error = None
         if model == "flux":
             return await self.generate_with_flux(prompt, width, height)
         elif model == "imagen":
             return await self.generate_with_imagen(prompt, width, height)
         else:
             print(f"Unknown model: {model}")
+            self.last_error = f"Unknown model: {model}"
             return None
 
     async def generate_from_keywords(
@@ -246,6 +259,10 @@ Antworte mit genau einem Satz."""),
         Returns:
             URL of generated image or None if failed
         """
+        self.last_error = None
         prompt = await self.create_generation_prompt(keywords, style, colors)
         print(f"Generated prompt for {model}: {prompt}")
-        return await self.generate_image(prompt, model, width, height)
+        url = await self.generate_image(prompt, model, width, height)
+        if url is None and self.last_error is None:
+            self.last_error = "Image generation returned no result"
+        return url
