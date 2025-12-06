@@ -267,6 +267,43 @@ Mögliche `source` Werte:
 - `none` - Keine passenden Bilder gefunden (stock_only Mode)
 - `failed` - Generierung fehlgeschlagen
 
+### Generate Image (Simplified GET)
+
+**Für einfache HTTP-Clients ohne JSON-Support:**
+
+```bash
+GET /generate-image-simple?title=Digital+Transformation&style=modern,minimal&image_mode=ai_only&ai_model=imagen&primary_color=%230066CC&secondary_color=%2300CC66
+```
+
+**Query-Parameter:**
+
+| Parameter | Typ | Default | Beschreibung |
+|-----------|-----|---------|--------------|
+| `title` | string | **required** | Folientitel (URL-encoded) |
+| `style` | string | optional | Komma-getrennte Styles: `modern,minimal,professional` |
+| `image_mode` | string | `auto` | Bildquelle: `stock_only`, `ai_only`, `auto` |
+| `ai_model` | string | `flux` | KI-Modell: `flux` oder `imagen` |
+| `primary_color` | string | optional | Primärfarbe (URL-encoded): `%230066CC` oder `blue` |
+| `secondary_color` | string | optional | Sekundärfarbe |
+| `keywords` | string | optional | Komma-getrennte Keywords (überschreibt Auto-Extraktion) |
+
+**Beispiele:**
+
+```bash
+# Minimales Beispiel
+GET /generate-image-simple?title=Lean+Production
+
+# Mit allen Optionen
+GET /generate-image-simple?title=Digital+Transformation&style=modern,minimal&image_mode=ai_only&ai_model=flux&primary_color=%230066CC&secondary_color=green&keywords=technology,innovation
+
+# Nur Stock-Fotos
+GET /generate-image-simple?title=Teamwork&image_mode=stock_only&keywords=business,collaboration
+```
+
+**Browser-freundlich:** Dieser Endpunkt kann direkt im Browser aufgerufen werden!
+
+Response: Identisch zu POST `/generate-image`
+
 ### Extract Keywords (Debug)
 ```bash
 POST http://localhost:8080/extract-keywords
