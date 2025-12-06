@@ -21,6 +21,10 @@ class Config(BaseModel):
     # Service URLs
     scoring_service_url: Optional[str] = os.getenv("SCORING_SERVICE_URL")
 
+    # OpenRouter metadata (optional but recommended by OpenRouter)
+    openrouter_referer: Optional[str] = os.getenv("OPENROUTER_REFERER")
+    openrouter_title: Optional[str] = os.getenv("OPENROUTER_TITLE")
+
     # Quality thresholds
     min_presentation_score: float = float(os.getenv("MIN_PRESENTATION_SCORE", "0.6"))
     min_quality_score: float = float(os.getenv("MIN_QUALITY_SCORE", "0.7"))
@@ -30,6 +34,7 @@ class Config(BaseModel):
     gemini_model: str = "google/gemini-2.0-flash-001"
     claude_model: str = "anthropic/claude-3.5-haiku"
     flux_model: str = "flux-2-pro"
+    gemini_image_model: str = "google/gemini-3-pro-image-preview"
 
 
 config = Config()

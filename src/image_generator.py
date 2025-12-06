@@ -149,7 +149,7 @@ Antworte mit genau einem Satz."""),
         height: int = 1024
     ) -> Optional[str]:
         """
-        Generate an image using Google Imagen via OpenRouter.
+        Generate an image using Gemini image preview via OpenRouter.
 
         Args:
             prompt: Text prompt for generation
@@ -160,18 +160,27 @@ Antworte mit genau einem Satz."""),
             URL of generated image or None if failed
         """
         try:
+            headers = {
+                "Authorization": f"Bearer {config.openrouter_api_key}",
+                "Content-Type": "application/json"
+            }
+
+            # Optional but recommended by OpenRouter for compliance/analytics
+            if config.openrouter_referer:
+                headers["HTTP-Referer"] = config.openrouter_referer
+            if config.openrouter_title:
+                headers["X-Title"] = config.openrouter_title
+
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    "https://openrouter.ai/api/v1/images/generations",
-                    headers={
-                        "Authorization": f"Bearer {config.openrouter_api_key}",
-                        "Content-Type": "application/json"
-                    },
+                    "https://openrouter.ai/api/v1/images",
+                    headers=headers,
                     json={
-                        "model": "google/imagen-3.0-generate-001",
+                        "model": config.gemini_image_model,
                         "prompt": f"{prompt}. No text in image.",
                         "n": 1,
-                        "size": f"{width}x{height}"
+                        "size": f"{width}x{height}",
+                        "response_format": "url"
                     }
                 )
                 response.raise_for_status()
