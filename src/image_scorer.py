@@ -1,4 +1,5 @@
 """Image quality and suitability scoring."""
+import logging
 import httpx
 from typing import Optional
 from langchain_core.prompts import ChatPromptTemplate
@@ -14,6 +15,7 @@ class ImageScorer:
 
     def __init__(self):
         """Initialize the image scorer."""
+        self.logger = logging.getLogger(__name__)
         self.llm = ChatOpenAI(
             model=config.gemini_model,
             openai_api_base="https://openrouter.ai/api/v1",
@@ -154,6 +156,16 @@ class ImageScorer:
             presentation_score=presentation_score,
             is_safe=is_safe,
             nudity_score=nudity_safe_score
+        )
+
+        self.logger.info(
+            "Scored image %s (source=%s): quality=%.3f, presentation=%s, nudity_safe=%.3f, is_safe=%s",
+            image_ref.id or image_ref.full_url,
+            image_ref.source,
+            scores.quality_score,
+            f"{scores.presentation_score:.3f}" if scores.presentation_score is not None else "None",
+            scores.nudity_score if scores.nudity_score is not None else -1,
+            scores.is_safe,
         )
 
         return ScoredImage(image_ref=image_ref, scores=scores)
