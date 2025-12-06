@@ -45,7 +45,10 @@ class ImageScorer:
             response.raise_for_status()
             data = response.json()
 
-        return data.get("quality", {}).get("score", 0.0)
+        quality_score = data.get("quality", {}).get("score", 0.0)
+        self.logger.info("Sightengine quality: url=%s score=%.3f", image_url, quality_score)
+
+        return quality_score
 
     async def check_nudity_sightengine(self, image_url: str) -> dict:
         """
@@ -70,7 +73,14 @@ class ImageScorer:
             response.raise_for_status()
             data = response.json()
 
-        return data.get("nudity", {})
+        nudity_data = data.get("nudity", {})
+        self.logger.info(
+            "Sightengine nudity: url=%s raw=%s",
+            image_url,
+            nudity_data
+        )
+
+        return nudity_data
 
     async def score_presentation_fit(
         self,
@@ -88,6 +98,7 @@ class ImageScorer:
             Presentation fit score (0-1) or None if service unavailable
         """
         if not config.scoring_service_url:
+            self.logger.info("Presentation scoring skipped (no SCORING_SERVICE_URL)")
             return None
 
         try:
@@ -100,9 +111,16 @@ class ImageScorer:
                 response.raise_for_status()
                 data = response.json()
 
-            return data.get("presentation_score", 0.5)
+            presentation_score = data.get("presentation_score", 0.5)
+            self.logger.info(
+                "Presentation score: url=%s topic=%s score=%.3f",
+                image_url,
+                topic,
+                presentation_score
+            )
+            return presentation_score
         except Exception as e:
-            print(f"Presentation scoring failed: {e}")
+            self.logger.warning("Presentation scoring failed: %s", e)
             return None
 
     async def score_image(
@@ -134,14 +152,14 @@ class ImageScorer:
 
         # Handle exceptions
         if isinstance(quality_score, Exception):
-            print(f"Quality scoring failed: {quality_score}")
+            self.logger.warning("Quality scoring failed: %s", quality_score)
             quality_score = 0.5
 
         if isinstance(presentation_score, Exception):
             presentation_score = None
 
         if isinstance(nudity_data, Exception):
-            print(f"Nudity check failed: {nudity_data}")
+            self.logger.warning("Nudity check failed: %s", nudity_data)
             nudity_data = {}
 
         # Check if image is safe (no inappropriate content)
