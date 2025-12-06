@@ -1,9 +1,11 @@
-# Python
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Virtual environments
 venv/
 env/
 ENV/
@@ -11,31 +13,28 @@ ENV/
 
 # Git
 .git/
-.gitignore
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Environment
+# Local env files (will use Portainer env vars)
 .env
 .env.local
 .env.*.local
 
-# Docs
-README.md
+# Documentation
 *.md
+PORTAINER.md
+TESTING.md
 
-# Docker
+# Docker files
 Dockerfile
-docker-compose.yml
+docker-compose*.yml
 .dockerignore
 
 # Temporary
