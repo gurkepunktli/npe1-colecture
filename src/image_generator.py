@@ -158,12 +158,12 @@ Antworte mit genau einem Satz."""),
         height: int = 1024
     ) -> Optional[str]:
         """
-        Generate an image using Gemini image preview via OpenRouter.
+        Generate an image using Gemini image preview via OpenRouter (chat/completions).
 
         Args:
             prompt: Text prompt for generation
-            width: Image width
-            height: Image height
+            width: Image width (unused by OpenRouter chat endpoint, kept for parity)
+            height: Image height (unused by OpenRouter chat endpoint, kept for parity)
 
         Returns:
             URL of generated image or None if failed
@@ -181,25 +181,43 @@ Antworte mit genau einem Satz."""),
             if config.openrouter_title:
                 headers["X-Title"] = config.openrouter_title
 
+            payload = {
+                "model": config.gemini_image_model,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "modalities": ["image", "text"]
+            }
+
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    "https://openrouter.ai/api/v1/images",
+                    "https://openrouter.ai/api/v1/chat/completions",
                     headers=headers,
-                    json={
-                        "model": config.gemini_image_model,
-                        "prompt": f"{prompt}. No text in image.",
-                        "n": 1,
-                        "size": f"{width}x{height}",
-                        "response_format": "url"
-                    }
+                    json=payload
                 )
                 response.raise_for_status()
-                data = response.json()
 
-                # OpenRouter returns image URL directly
-                if data.get("data") and len(data["data"]) > 0:
-                    return data["data"][0].get("url")
+                try:
+                    data = response.json()
+                except Exception:
+                    text = response.text[:500]
+                    self.last_error = f"OpenRouter JSON parse failed (status {response.status_code}): {text}"
+                    return None
 
+                choices = data.get("choices") or []
+                if not choices:
+                    self.last_error = f"No choices in OpenRouter response: {data}"
+                    return None
+
+                message = choices[0].get("message", {}) or {}
+                images = message.get("images") or []
+                if images:
+                    first_image = images[0] or {}
+                    image_url = (first_image.get("image_url") or {}).get("url")
+                    if image_url:
+                        return image_url
+
+                self.last_error = f"No image returned by OpenRouter: {data}"
                 return None
 
         except Exception as e:

@@ -34,7 +34,7 @@ class Config(BaseModel):
     gemini_model: str = "google/gemini-2.0-flash-001"
     claude_model: str = "anthropic/claude-3.5-haiku"
     flux_model: str = "flux-2-pro"
-    gemini_image_model: str = "google/gemini-3-pro-image-preview"
+    gemini_image_model: str = "google/gemini-2.5-flash-image-preview"
 
 
 config = Config()
