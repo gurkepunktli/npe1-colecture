@@ -1,6 +1,13 @@
 """Data models for the image generator."""
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel
+
+
+class ColorConfig(BaseModel):
+    """Color configuration for image generation."""
+
+    primary: Optional[str] = None  # e.g., "#FF5733" or "blue"
+    secondary: Optional[str] = None  # e.g., "#33FF57" or "green"
 
 
 class SlideInput(BaseModel):
@@ -10,6 +17,12 @@ class SlideInput(BaseModel):
     sources: Optional[List[Dict[str, str]]] = None
     unsplashSearchTerms: Optional[List[str]] = None
     bullets: Optional[List[Dict[str, Any]]] = None
+
+    # New parameters
+    style: Optional[List[str]] = None  # e.g., ["minimal", "modern", "professional"]
+    image_mode: Literal["stock_only", "ai_only", "auto"] = "auto"
+    colors: Optional[ColorConfig] = None
+    ai_model: Literal["flux", "imagen"] = "flux"
 
 
 class KeywordExtractionResult(BaseModel):
