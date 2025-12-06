@@ -41,9 +41,23 @@ MIN_NUDITY_SAFE_SCORE=0.99
 
 ### Schritt 4: Deploy
 
+**WICHTIG:** Der Service nutzt das externe Netzwerk `cloudflare_net`.
+
+Das Netzwerk ist bereits im `docker-compose.yml` konfiguriert:
+```yaml
+networks:
+  cloudflare_net:
+    external: true
+```
+
+Stelle sicher, dass das Netzwerk `cloudflare_net` existiert, sonst:
+```bash
+docker network create cloudflare_net
+```
+
 1. Klicke auf **Deploy the stack**
 2. Warte bis der Build abgeschlossen ist
-3. Service läuft auf Port **8080**
+3. Service läuft auf Port **8080** im Netzwerk `cloudflare_net`
 
 ---
 
@@ -67,6 +81,9 @@ Falls du das Image selbst bauen möchtest:
 
 **Network ports configuration:**
 - Map port `8080` → `8080` (oder anderer Host-Port)
+
+**Network:**
+- Network: `cloudflare_net`
 
 **Advanced container settings:**
 

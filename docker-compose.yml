@@ -14,3 +14,9 @@ services:
     volumes:
       # Mount source for development (optional)
       - ./src:/app/src
+    networks:
+      - cloudflare_net
+
+networks:
+  cloudflare_net:
+    external: true
