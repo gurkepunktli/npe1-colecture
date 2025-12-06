@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: npe1-colecture
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    volumes:
+      # Mount source for development
+      - ./src:/app/src
+    networks:
+      - cloudflare_net
+
+networks:
+  cloudflare_net:
+    external: true

@@ -21,9 +21,9 @@ services:
       - MIN_QUALITY_SCORE=${MIN_QUALITY_SCORE:-0.7}
       - MIN_NUDITY_SAFE_SCORE=${MIN_NUDITY_SAFE_SCORE:-0.99}
     restart: unless-stopped
-    volumes:
-      # Mount source for development (optional)
-      - ./src:/app/src
+    # NOTE: volumes removed for Portainer deployment
+    # The src/ directory is baked into the image during build
+    # Do NOT mount ./src:/app/src as it will be empty in Portainer's runtime context
     networks:
       - cloudflare_net
 

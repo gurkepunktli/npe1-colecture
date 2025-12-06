@@ -6,31 +6,16 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Debug: Show what we have in build context BEFORE copying
-RUN echo "=== Docker build context check (should fail, but shows us the context) ===" || true
-
-# Copy root-level Python files
+# Copy application files
 COPY *.py ./
 COPY stack.env .env.example ./
-
-# Debug: Check what got copied so far
-RUN echo "=== After copying root files ===" && ls -la /app
-
-# Copy src directory explicitly with trailing slash
 COPY src/ ./src/
 
-# Debug: Comprehensive verification
-RUN echo "=== After copying src/ ===" && \
-    ls -la /app && \
+# Verify build (can be removed after successful deployment)
+RUN echo "=== Build verification ===" && \
+    echo "src/ contents:" && ls -la /app/src/ && \
     echo "" && \
-    echo "=== Contents of /app/src/ ===" && \
-    ls -la /app/src/ && \
-    echo "" && \
-    echo "=== File count in src/ ===" && \
-    find /app/src -type f | wc -l && \
-    echo "" && \
-    echo "=== All files in src/ ===" && \
-    find /app/src -type f
+    echo "Total Python files in src/:" && ls -1 /app/src/*.py | wc -l
 
 # Expose port
 EXPOSE 8080
