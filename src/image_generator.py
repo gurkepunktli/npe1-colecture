@@ -52,29 +52,30 @@ Antworte mit genau einem Satz."""),
             Generated prompt for image generation
         """
         self.last_error = None
-        # Build style instruction
-        style_instruction = ""
-        if style:
-            style_str = ", ".join(style)
-            style_instruction = f"Style-Anforderungen: {style_str}"
+        try:
+            # Build style instruction
+            style_instruction = ""
+            if style:
+                style_str = ", ".join(style)
+                style_instruction = f"Style-Anforderungen: {style_str}"
 
-        # Build color instruction
-        color_instruction = ""
-        if colors:
-            color_parts = []
-            if colors.primary:
-                color_parts.append(f"Primärfarbe: {colors.primary}")
-            if colors.secondary:
-                color_parts.append(f"Sekundärfarbe: {colors.secondary}")
-            if color_parts:
-                color_instruction = "Farbanforderungen: " + ", ".join(color_parts)
+            # Build color instruction
+            color_instruction = ""
+            if colors:
+                color_parts = []
+                if colors.primary:
+                    color_parts.append(f"Primary color: {colors.primary}")
+                if colors.secondary:
+                    color_parts.append(f"Secondary color: {colors.secondary}")
+                if color_parts:
+                    color_instruction = "Farbanforderungen: " + ", ".join(color_parts)
 
-        chain = self.prompt_template | self.llm | StrOutputParser()
-        prompt = await chain.ainvoke({
-            "keywords": keywords,
-            "style_instruction": style_instruction,
-            "color_instruction": color_instruction
-        })
+            chain = self.prompt_template | self.llm | StrOutputParser()
+            prompt = await chain.ainvoke({
+                "keywords": keywords,
+                "style_instruction": style_instruction,
+                "color_instruction": color_instruction
+            })
             return prompt.strip()
         except Exception as e:
             self.last_error = f"Prompt generation failed: {e}"
