@@ -22,22 +22,24 @@ https://github.com/gurkepunktli/npe1-colecture
 
 ### Schritt 3: Environment Variables
 
-Klicke auf **Advanced mode** und füge deine API Keys hinzu:
+**WICHTIG:** Scrolle runter und klicke auf **Environment variables** → **Advanced mode**
 
-```env
+Füge folgende Variablen ein (eine pro Zeile, ohne Anführungszeichen):
+
+```
 OPENROUTER_API_KEY=sk-or-v1-xxxxx
 UNSPLASH_ACCESS_KEY=xxxxx
 PEXELS_API_KEY=xxxxx
 SIGHTENGINE_API_USER=xxxxx
 SIGHTENGINE_API_SECRET=xxxxx
 FLUX_API_KEY=xxxxx
-
-# Optional
 SCORING_SERVICE_URL=http://192.168.100.14:8000
 MIN_PRESENTATION_SCORE=0.6
 MIN_QUALITY_SCORE=0.7
 MIN_NUDITY_SAFE_SCORE=0.99
 ```
+
+**Tipp:** Die Vorlage findest du auch in [.env.portainer](.env.portainer)
 
 ### Schritt 4: Deploy
 

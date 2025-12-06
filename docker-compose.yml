@@ -6,10 +6,20 @@ services:
     container_name: npe1-colecture
     ports:
       - "8080:8080"
-    env_file:
-      - .env
     environment:
       - PYTHONUNBUFFERED=1
+      # API Keys (set these in Portainer Stack environment variables)
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - UNSPLASH_ACCESS_KEY=${UNSPLASH_ACCESS_KEY}
+      - PEXELS_API_KEY=${PEXELS_API_KEY}
+      - SIGHTENGINE_API_USER=${SIGHTENGINE_API_USER}
+      - SIGHTENGINE_API_SECRET=${SIGHTENGINE_API_SECRET}
+      - FLUX_API_KEY=${FLUX_API_KEY}
+      # Optional
+      - SCORING_SERVICE_URL=${SCORING_SERVICE_URL:-}
+      - MIN_PRESENTATION_SCORE=${MIN_PRESENTATION_SCORE:-0.6}
+      - MIN_QUALITY_SCORE=${MIN_QUALITY_SCORE:-0.7}
+      - MIN_NUDITY_SAFE_SCORE=${MIN_NUDITY_SAFE_SCORE:-0.99}
     restart: unless-stopped
     volumes:
       # Mount source for development (optional)
