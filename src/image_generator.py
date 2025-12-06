@@ -229,7 +229,7 @@ Antworte mit genau einem Satz."""),
     async def generate_image(
         self,
         prompt: str,
-        model: Literal["flux", "imagen"] = "flux",
+        model: Literal["flux", "banana"] = "flux",
         width: int = 1024,
         height: int = 1024
     ) -> Optional[str]:
@@ -248,7 +248,7 @@ Antworte mit genau einem Satz."""),
         self.last_error = None
         if model == "flux":
             return await self.generate_with_flux(prompt, width, height)
-        elif model == "imagen":
+        elif model in ("banana", "imagen"):
             return await self.generate_with_imagen(prompt, width, height)
         else:
             print(f"Unknown model: {model}")
@@ -258,7 +258,7 @@ Antworte mit genau einem Satz."""),
     async def generate_from_keywords(
         self,
         keywords: str,
-        model: Literal["flux", "imagen"] = "flux",
+        model: Literal["flux", "banana"] = "flux",
         style: Optional[List[str]] = None,
         colors: Optional[ColorConfig] = None,
         width: int = 1024,

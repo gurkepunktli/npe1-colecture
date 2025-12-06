@@ -22,7 +22,7 @@ class SlideInput(BaseModel):
     style: Optional[List[str]] = None  # e.g., ["minimal", "modern", "professional"]
     image_mode: Literal["stock_only", "ai_only", "auto"] = "auto"
     colors: Optional[ColorConfig] = None
-    ai_model: Literal["flux", "imagen"] = "flux"
+    ai_model: Literal["flux", "banana", "imagen"] = "flux"
 
 
 class KeywordExtractionResult(BaseModel):

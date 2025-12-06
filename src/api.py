@@ -59,7 +59,7 @@ async def generate_image_simple(
     title: str = Query(..., description="Slide title"),
     style: Optional[str] = Query(None, description="Comma-separated style values (e.g., 'modern,minimal')"),
     image_mode: str = Query("auto", description="Image mode: stock_only, ai_only, or auto"),
-    ai_model: str = Query("flux", description="AI model: flux or imagen"),
+    ai_model: str = Query("flux", description="AI model: flux or banana"),
     primary_color: Optional[str] = Query(None, description="Primary color (e.g., '#0066CC' or 'blue')"),
     secondary_color: Optional[str] = Query(None, description="Secondary color"),
     keywords: Optional[str] = Query(None, description="Comma-separated keywords (overrides auto-extraction)")
