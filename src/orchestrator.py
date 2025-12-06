@@ -5,6 +5,7 @@ from .keyword_extractor import KeywordExtractor
 from .image_search import ImageSearcher
 from .image_scorer import ImageScorer
 from .image_generator import ImageGenerator
+from . import generated_cache
 
 
 class ImageOrchestrator:
@@ -135,10 +136,19 @@ class ImageOrchestrator:
         )
 
         if image_url:
-            print(f"Generated image: {image_url}")
+            # If OpenRouter returned a data URL, store it and serve via /generated/{id}
+            served_url = image_url
+            if image_url.startswith("data:"):
+                try:
+                    image_id = generated_cache.store_data_url(image_url)
+                    served_url = f"/generated/{image_id}"
+                except Exception as exc:
+                    print(f"Failed to cache data URL: {exc}")
+
+            print(f"Generated image: {served_url}")
             source = f"generated_{slide.ai_model}"
             return ImageResult(
-                url=image_url,
+                url=served_url,
                 source=source,
                 keywords=keywords,
                 error=None

@@ -1,10 +1,11 @@
 """FastAPI application for the image generator service."""
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import SlideInput, ImageResult, ColorConfig
 from .orchestrator import ImageOrchestrator
+from . import generated_cache
 
 app = FastAPI(
     title="NPE1 Colecture Image Generator",
@@ -120,3 +121,12 @@ async def extract_keywords(slide: SlideInput):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/generated/{image_id}")
+async def get_generated_image(image_id: str):
+    """Serve generated images stored in memory from data URLs."""
+    cached = generated_cache.get_image(image_id)
+    if not cached:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return Response(content=cached.data, media_type=cached.media_type)
