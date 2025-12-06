@@ -176,6 +176,14 @@ class ImageScorer:
             nudity_score=nudity_safe_score
         )
 
+        # Ensure per-image scoring is visible even without logging configuration
+        print(
+            f"[Score] source={image_ref.source} id={image_ref.id or 'n/a'} "
+            f"quality={scores.quality_score:.3f} "
+            f"presentation={scores.presentation_score if scores.presentation_score is not None else 'None'} "
+            f"nudity_safe={scores.nudity_score if scores.nudity_score is not None else 'n/a'} "
+            f"is_safe={scores.is_safe}"
+        )
         self.logger.info(
             "Scored image %s (source=%s): quality=%.3f, presentation=%s, nudity_safe=%.3f, is_safe=%s",
             image_ref.id or image_ref.full_url,
