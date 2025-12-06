@@ -1,128 +1,260 @@
 # NPE1 Colecture - Image Generator
 
-AI-powered image finder and generator for PowerPoint presentations using LangChain.
+**AI-powered image finder and generator for PowerPoint presentations**
 
-This project reimplements an n8n workflow in Python using LangChain to:
-- Extract relevant keywords from slide content
-- Search stock photo services (Unsplash, Pexels)
-- Score images for quality and presentation suitability
-- Generate AI images as fallback using FLUX
+Automatisierte Bildfindung für PowerPoint-Präsentationen mit intelligenter Keyword-Extraktion, Multi-Source-Suche und KI-generierter Fallback-Lösung.
+
+## Funktionsweise
+
+Das System durchläuft einen mehrstufigen Pipeline-Prozess:
+
+1. **Keyword-Extraktion**: LLMs analysieren Folientitel und Inhalt, um relevante visuelle Suchbegriffe zu generieren
+2. **Multi-Source-Suche**: Parallele Suche in Unsplash und Pexels Stock-Photo-Datenbanken
+3. **Quality Scoring**: Automatische Bewertung von Bildqualität, Präsentationseignung und Safety-Checks
+4. **KI-Generierung**: Falls keine passenden Stock-Fotos gefunden werden, generiert FLUX AI ein maßgeschneidertes Bild
+5. **Best Match Selection**: Auswahl des am besten bewerteten Bildes basierend auf konfigurierbaren Qualitätsschwellenwerten
 
 ## Features
 
-- **Intelligent Keyword Extraction**: Uses LLMs to extract presentation-relevant keywords from slide text
-- **Multi-Source Image Search**: Searches both Unsplash and Pexels APIs
-- **Quality Scoring**: Evaluates images for technical quality and topic relevance
-- **Safety Checks**: Filters out inappropriate content
-- **AI Fallback**: Generates custom images when stock photos don't match
-- **REST API**: FastAPI server for easy integration
+- **Intelligente Keyword-Extraktion**: Verwendet Gemini/Claude über OpenRouter zur Extraktion präsentationsrelevanter Keywords
+- **Multi-Source Image Search**: Gleichzeitige Suche in Unsplash und Pexels mit Deduplizierung
+- **Quality Scoring**:
+  - Technische Bildqualität via SightEngine API
+  - Optional: Semantische Präsentationseignung via Custom Scoring Service
+  - NSFW/Safety-Filterung
+- **KI-Bildgenerierung**: FLUX AI als Fallback für fehlende Stock-Fotos
+- **REST API**: FastAPI-Server mit automatischer Swagger-Dokumentation
+- **Docker-Ready**: Containerisiert für einfaches Deployment mit Portainer
 
-## Setup
+## API Keys erforderlich
 
-1. Clone the repository:
-```bash
-git clone https://github.com/gurkepunktli/npe1-colecture.git
-cd npe1-colecture
-```
+Die folgenden API-Keys müssen konfiguriert werden:
 
-2. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+### Pflichtfelder
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+| Service | Variable | Beschreibung | Bezugsquelle |
+|---------|----------|--------------|--------------|
+| **OpenRouter** | `OPENROUTER_API_KEY` | LLM-Zugriff für Gemini & Claude | https://openrouter.ai/ |
+| **Unsplash** | `UNSPLASH_ACCESS_KEY` | Stock-Foto-Suche | https://unsplash.com/developers |
+| **Pexels** | `PEXELS_API_KEY` | Stock-Foto-Suche | https://www.pexels.com/api/ |
+| **SightEngine** | `SIGHTENGINE_API_USER`<br>`SIGHTENGINE_API_SECRET` | Bildqualität & Safety-Checks | https://sightengine.com/ |
+| **FLUX** | `FLUX_API_KEY` | KI-Bildgenerierung | https://api.bfl.ai/ |
 
-4. Configure environment variables:
+### Optional
+
+| Variable | Default | Beschreibung |
+|----------|---------|--------------|
+| `SCORING_SERVICE_URL` | - | URL eines Custom Scoring Service für semantische Präsentationseignung |
+| `MIN_PRESENTATION_SCORE` | 0.6 | Minimale Präsentationseignung (0-1) |
+| `MIN_QUALITY_SCORE` | 0.7 | Minimale Bildqualität (0-1) |
+| `MIN_NUDITY_SAFE_SCORE` | 0.99 | Minimaler Safety-Score (0-1) |
+
+## Konfiguration der API-Keys
+
+### Für Portainer Deployment (Empfohlen)
+
+Die API-Keys werden **direkt in Portainer** als Stack Environment Variables konfiguriert:
+
+1. Portainer → Stacks → Add stack
+2. Repository: `https://github.com/gurkepunktli/npe1-colecture`
+3. **Environment Variables** Tab → Jede Variable einzeln hinzufügen:
+   ```
+   OPENROUTER_API_KEY=sk-or-...
+   UNSPLASH_ACCESS_KEY=...
+   PEXELS_API_KEY=...
+   SIGHTENGINE_API_USER=...
+   SIGHTENGINE_API_SECRET=...
+   FLUX_API_KEY=...
+   ```
+4. Deploy
+
+**Wichtig**: Die Datei `stack.env` im Repository enthält nur Platzhalter. Die echten Werte werden von Portainer eingefügt.
+
+### Für lokale Entwicklung
+
+Erstelle eine `.env` Datei im Projektverzeichnis:
+
 ```bash
 cp .env.example .env
-# Edit .env with your API keys
 ```
 
-## Configuration
+Bearbeite `.env` und füge die API-Keys ein:
 
-Required API keys (add to [.env](.env)):
-- `OPENROUTER_API_KEY`: For LLM access (Gemini, Claude)
-- `UNSPLASH_ACCESS_KEY`: For Unsplash image search
-- `PEXELS_API_KEY`: For Pexels image search
-- `SIGHTENGINE_API_USER` & `SIGHTENGINE_API_SECRET`: For image quality/safety checks
-- `FLUX_API_KEY`: For AI image generation
+```env
+OPENROUTER_API_KEY=sk-or-v1-...
+UNSPLASH_ACCESS_KEY=...
+PEXELS_API_KEY=...
+SIGHTENGINE_API_USER=...
+SIGHTENGINE_API_SECRET=...
+FLUX_API_KEY=...
+```
 
-Optional:
-- `SCORING_SERVICE_URL`: Local service for presentation fit scoring
+## Deployment & Nutzung
 
-## Usage
+### Portainer (Production)
 
-### Option 1: Docker (Empfohlen)
+**Voraussetzungen:**
+- Portainer Installation mit Zugriff auf Docker
+- Externes Netzwerk `cloudflare_net` muss existieren (oder in docker-compose.yml anpassen)
+- Alle API-Keys vorbereitet (siehe oben)
 
-1. Configure environment:
+**Deployment-Schritte:**
+
+1. **Stack erstellen** in Portainer:
+   - Portainer → Stacks → Add stack
+   - Name: `npe1-colecture`
+   - Build method: **Repository**
+
+2. **Repository konfigurieren**:
+   - Repository URL: `https://github.com/gurkepunktli/npe1-colecture`
+   - Repository reference: `refs/heads/main`
+   - Compose path: `docker-compose.yml`
+
+3. **Environment Variables** hinzufügen (kritisch!):
+   ```
+   OPENROUTER_API_KEY=sk-or-v1-...
+   UNSPLASH_ACCESS_KEY=...
+   PEXELS_API_KEY=...
+   SIGHTENGINE_API_USER=...
+   SIGHTENGINE_API_SECRET=...
+   FLUX_API_KEY=...
+   ```
+
+4. **Deploy** klicken
+
+5. **Logs prüfen**:
+   - Stack → Container: `npe1-colecture` → Logs
+   - Erfolgreiche Meldung: `=== SUCCESS: App imported!`
+
+6. **API testen**:
+   ```bash
+   curl http://YOUR_SERVER:8080/
+   ```
+
+**Wichtige Hinweise:**
+- Der Service nutzt Port `8080` und ist über das `cloudflare_net` Netzwerk erreichbar
+- Bei Problemen: Stack komplett löschen und neu deployen (Build-Cache!)
+- Detaillierte Deployment-Anleitung: [PORTAINER.md](PORTAINER.md)
+
+### Lokale Entwicklung (Docker Compose)
+
+Für lokale Tests mit Docker:
+
 ```bash
+# 1. .env Datei erstellen
 cp .env.example .env
-# Edit .env with your API keys
-```
+# API-Keys in .env eintragen
 
-2. Start the service:
-```bash
+# 2. Service starten
 docker-compose up -d
-```
 
-3. Check logs:
-```bash
+# 3. Logs prüfen
 docker-compose logs -f
-```
 
-4. Stop the service:
-```bash
+# 4. Service stoppen
 docker-compose down
 ```
 
-### Option 2: Local Python
+**Hinweis**: Für lokale Entwicklung sollte in `docker-compose.yml` das Volume `./src:/app/src` wieder aktiviert werden für Live-Reloading.
 
-1. Create virtual environment:
+### Lokale Entwicklung (Python)
+
+Für Development ohne Docker:
+
 ```bash
+# 1. Virtual Environment erstellen
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 2. Dependencies installieren
 pip install -r requirements.txt
-```
 
-2. Run CLI test:
-```bash
-python main.py
-```
+# 3. .env konfigurieren
+cp .env.example .env
+# API-Keys eintragen
 
-3. Or start API server:
-```bash
+# 4. Server starten
 python run_server.py
 ```
 
-### API Usage
+API läuft dann auf: `http://localhost:8080`
 
-API is available at `http://localhost:8080`
+## API Endpoints
 
-Swagger docs: `http://localhost:8080/docs`
-
-Example request:
+### Health Check
 ```bash
-curl -X POST http://localhost:8080/generate-image \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Lean Production",
-    "unsplashSearchTerms": ["manufacturing", "efficiency"],
-    "bullets": [{"bullet": "Production optimization", "sub": []}]
-  }'
+GET http://localhost:8080/
 ```
 
 Response:
 ```json
 {
-  "url": "https://images.unsplash.com/...",
-  "source": "stock_unsplash",
-  "keywords": "manufacturing, efficiency"
+  "service": "NPE1 Colecture Image Generator",
+  "status": "running",
+  "version": "1.0.0"
 }
 ```
+
+### Generate Image
+```bash
+POST http://localhost:8080/generate-image
+Content-Type: application/json
+
+{
+  "title": "Lean Production",
+  "unsplashSearchTerms": ["manufacturing", "efficiency"],
+  "bullets": [
+    {"bullet": "Kontinuierliche Prozessoptimierung", "sub": []},
+    {"bullet": "Waste Reduction", "sub": []}
+  ]
+}
+```
+
+Response:
+```json
+{
+  "url": "https://images.unsplash.com/photo-...",
+  "source": "stock_unsplash",
+  "keywords": "manufacturing, efficiency, factory"
+}
+```
+
+Mögliche `source` Werte:
+- `stock_unsplash` - Gefunden auf Unsplash
+- `stock_pexels` - Gefunden auf Pexels
+- `generated_flux` - KI-generiert mit FLUX
+
+### Extract Keywords (Debug)
+```bash
+POST http://localhost:8080/extract-keywords
+Content-Type: application/json
+
+{
+  "title": "Digital Transformation",
+  "bullets": []
+}
+```
+
+Response:
+```json
+{
+  "detailed": {
+    "skip": false,
+    "topics_de": ["Digitalisierung", "Innovation", "Technologie"],
+    "english_keywords": ["digital", "technology", "innovation", "cloud", "automation"],
+    "style": ["modern", "minimal"],
+    "negative_keywords": ["text", "diagram", "screenshot"],
+    "constraints": {"orientation": "landscape", "color": null}
+  },
+  "refined": "digital transformation, technology"
+}
+```
+
+### Interaktive API-Dokumentation
+
+Swagger UI: `http://localhost:8080/docs`
+
+ReDoc: `http://localhost:8080/redoc`
 
 ## Architecture
 
