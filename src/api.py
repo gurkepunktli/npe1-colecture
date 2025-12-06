@@ -1,8 +1,9 @@
 """FastAPI application for the image generator service."""
-from fastapi import FastAPI, HTTPException
+from typing import Optional, List
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from .models import SlideInput, ImageResult
+from .models import SlideInput, ImageResult, ColorConfig
 from .orchestrator import ImageOrchestrator
 
 app = FastAPI(
@@ -46,6 +47,54 @@ async def generate_image(slide: SlideInput):
         Image result with URL and source information
     """
     try:
+        result = await orchestrator.process_slide(slide)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/generate-image-simple", response_model=ImageResult)
+async def generate_image_simple(
+    title: str = Query(..., description="Slide title"),
+    style: Optional[str] = Query(None, description="Comma-separated style values (e.g., 'modern,minimal')"),
+    image_mode: str = Query("auto", description="Image mode: stock_only, ai_only, or auto"),
+    ai_model: str = Query("flux", description="AI model: flux or imagen"),
+    primary_color: Optional[str] = Query(None, description="Primary color (e.g., '#0066CC' or 'blue')"),
+    secondary_color: Optional[str] = Query(None, description="Secondary color"),
+    keywords: Optional[str] = Query(None, description="Comma-separated keywords (overrides auto-extraction)")
+):
+    """
+    Simple GET endpoint for image generation with query parameters.
+
+    Example:
+        GET /generate-image-simple?title=Digital%20Transformation&style=modern,minimal&image_mode=ai_only&ai_model=imagen
+    """
+    try:
+        # Parse style
+        style_list = None
+        if style:
+            style_list = [s.strip() for s in style.split(",")]
+
+        # Parse keywords
+        keywords_list = None
+        if keywords:
+            keywords_list = [k.strip() for k in keywords.split(",")]
+
+        # Build color config
+        colors = None
+        if primary_color or secondary_color:
+            colors = ColorConfig(primary=primary_color, secondary=secondary_color)
+
+        # Create SlideInput
+        slide = SlideInput(
+            title=title,
+            style=style_list,
+            image_mode=image_mode,  # type: ignore
+            ai_model=ai_model,  # type: ignore
+            colors=colors,
+            unsplashSearchTerms=keywords_list
+        )
+
         result = await orchestrator.process_slide(slide)
         return result
     except Exception as e:
