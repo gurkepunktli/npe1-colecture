@@ -6,21 +6,31 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Debug: Show what we have in build context BEFORE copying
+RUN echo "=== Docker build context check (should fail, but shows us the context) ===" || true
+
 # Copy root-level Python files
-COPY *.py /app/
-COPY stack.env .env.example /app/
+COPY *.py ./
+COPY stack.env .env.example ./
 
-# Copy src directory explicitly
-COPY src/ /app/src/
+# Debug: Check what got copied so far
+RUN echo "=== After copying root files ===" && ls -la /app
 
-# Debug: verify files copied
-RUN echo "=== Build time check ===" && \
+# Copy src directory explicitly with trailing slash
+COPY src/ ./src/
+
+# Debug: Comprehensive verification
+RUN echo "=== After copying src/ ===" && \
     ls -la /app && \
-    echo "=== src directory ===" && \
-    ls -la /app/src && \
-    echo "=== Checking specific files ===" && \
-    test -f /app/src/__init__.py && echo "src/__init__.py: YES" || echo "src/__init__.py: NO" && \
-    test -f /app/src/api.py && echo "src/api.py: YES" || echo "src/api.py: NO"
+    echo "" && \
+    echo "=== Contents of /app/src/ ===" && \
+    ls -la /app/src/ && \
+    echo "" && \
+    echo "=== File count in src/ ===" && \
+    find /app/src -type f | wc -l && \
+    echo "" && \
+    echo "=== All files in src/ ===" && \
+    find /app/src -type f
 
 # Expose port
 EXPOSE 8080
