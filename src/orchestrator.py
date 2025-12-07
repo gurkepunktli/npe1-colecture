@@ -144,6 +144,8 @@ class ImageOrchestrator:
             slide=slide
         )
 
+        base_url = config.public_base_url.rstrip("/") if getattr(config, "public_base_url", None) else "http://localhost:8080"
+
         if image_url:
             # If OpenRouter returned a data URL, store it and serve via /generated/{id}
             served_url = image_url
@@ -151,10 +153,7 @@ class ImageOrchestrator:
                 try:
                     image_id = generated_cache.store_data_url(image_url)
                     path = f"/generated/{image_id}"
-                    if getattr(config, "public_base_url", None):
-                        served_url = f"{config.public_base_url.rstrip('/')}{path}"
-                    else:
-                        served_url = path
+                    served_url = f"{base_url}{path}"
                 except Exception as exc:
                     print(f"Failed to cache data URL: {exc}")
             elif ai_model == "flux" and image_url.startswith("http"):
@@ -166,10 +165,7 @@ class ImageOrchestrator:
                         media_type = resp.headers.get("content-type", "application/octet-stream")
                         image_id = generated_cache.store_bytes(resp.content, media_type)
                         path = f"/generated/{image_id}"
-                        if getattr(config, "public_base_url", None):
-                            served_url = f"{config.public_base_url.rstrip('/')}{path}"
-                        else:
-                            served_url = path
+                        served_url = f"{base_url}{path}"
                 except Exception as exc:
                     print(f"Failed to download/cache Flux image: {exc}")
 
