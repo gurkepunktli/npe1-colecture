@@ -1,13 +1,15 @@
 """AI image generation using FLUX or Google Imagen."""
 import httpx
 import asyncio
+import json
 from typing import Optional, List, Literal
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 
 from .config import config
-from .models import ColorConfig
+from .models import ColorConfig, SlideInput
+from .prompts import SCENARIO_PROMPTS
 
 
 class ImageGenerator:
@@ -34,11 +36,22 @@ Antworte mit genau einem Satz."""),
             ("human", "Keywords: {keywords}")
         ])
 
+    def _select_scenario(self, style: Optional[List[str]]) -> Optional[str]:
+        """Pick a scenario key if present in style list."""
+        if not style:
+            return None
+        for item in style:
+            key = item.lower()
+            if key in SCENARIO_PROMPTS:
+                return key
+        return None
+
     async def create_generation_prompt(
         self,
         keywords: str,
         style: Optional[List[str]] = None,
-        colors: Optional[ColorConfig] = None
+        colors: Optional[ColorConfig] = None,
+        slide: Optional[SlideInput] = None
     ) -> str:
         """
         Create an image generation prompt from keywords, style, and colors.
@@ -47,12 +60,24 @@ Antworte mit genau einem Satz."""),
             keywords: Keywords describing the desired image
             style: Style attributes (e.g., ["minimal", "modern"])
             colors: Primary and secondary colors
+            slide: Slide payload (for scenario-driven prompting)
 
         Returns:
             Generated prompt for image generation
         """
         self.last_error = None
         try:
+            scenario = self._select_scenario(style)
+            if scenario:
+                slide_payload = slide.model_dump() if slide else {"keywords": keywords}
+                prompt_template = ChatPromptTemplate.from_messages([
+                    ("system", SCENARIO_PROMPTS[scenario]),
+                    ("human", "{slide_json}")
+                ])
+                chain = prompt_template | self.llm | StrOutputParser()
+                prompt = await chain.ainvoke({"slide_json": json.dumps(slide_payload)})
+                return prompt.strip()
+
             # Build style instruction
             style_instruction = ""
             if style:
@@ -262,7 +287,8 @@ Antworte mit genau einem Satz."""),
         style: Optional[List[str]] = None,
         colors: Optional[ColorConfig] = None,
         width: int = 1024,
-        height: int = 1024
+        height: int = 1024,
+        slide: Optional[SlideInput] = None
     ) -> Optional[str]:
         """
         Generate image from keywords with style and color support.
@@ -274,12 +300,13 @@ Antworte mit genau einem Satz."""),
             colors: Color configuration
             width: Image width
             height: Image height
+            slide: Slide payload (used for scenario prompts)
 
         Returns:
             URL of generated image or None if failed
         """
         self.last_error = None
-        prompt = await self.create_generation_prompt(keywords, style, colors)
+        prompt = await self.create_generation_prompt(keywords, style, colors, slide)
         print(f"Generated prompt for {model}: {prompt}")
         url = await self.generate_image(prompt, model, width, height)
         if url is None and self.last_error is None:

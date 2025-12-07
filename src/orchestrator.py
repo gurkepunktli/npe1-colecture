@@ -133,7 +133,8 @@ class ImageOrchestrator:
             keywords=keywords,
             model=slide.ai_model,
             style=slide.style,
-            colors=slide.colors
+            colors=slide.colors,
+            slide=slide
         )
 
         if image_url:
