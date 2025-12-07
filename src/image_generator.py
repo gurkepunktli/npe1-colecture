@@ -2,7 +2,7 @@
 import httpx
 import asyncio
 import json
-from typing import Optional, List, Literal
+from typing import Optional, Literal
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
@@ -29,20 +29,19 @@ class ImageGenerator:
             ("human", "Keywords: {keywords}")
         ])
 
-    def _select_scenario(self, style: Optional[List[str]]) -> Optional[str]:
-        """Pick a scenario key if present in style list."""
+    def _select_scenario(self, style: Optional[str]) -> Optional[str]:
+        """Pick a scenario key if present in style string."""
         if not style:
             return None
-        for item in style:
-            key = item.lower()
-            if key in SCENARIO_PROMPTS:
-                return key
+        key = style.lower().strip()
+        if key in SCENARIO_PROMPTS:
+            return key
         return None
 
     async def create_generation_prompt(
         self,
         keywords: str,
-        style: Optional[List[str]] = None,
+        style: Optional[str] = None,
         colors: Optional[ColorConfig] = None,
         slide: Optional[SlideInput] = None
     ) -> str:
@@ -51,7 +50,7 @@ class ImageGenerator:
 
         Args:
             keywords: Keywords describing the desired image
-            style: Style attributes (e.g., ["minimal", "modern"])
+            style: Style attribute or scenario key (e.g., "minimal" or "flat_illustration")
             colors: Primary and secondary colors
             slide: Slide payload (for scenario-driven prompting)
 
@@ -74,8 +73,7 @@ class ImageGenerator:
             # Build style instruction
             style_instruction = ""
             if style:
-                style_str = ", ".join(style)
-                style_instruction = f"Style-Anforderungen: {style_str}"
+                style_instruction = f"Style-Anforderungen: {style}"
 
             # Build color instruction
             color_instruction = ""
@@ -292,7 +290,7 @@ class ImageGenerator:
         self,
         keywords: str,
         model: Literal["auto", "flux", "banana", "imagen"] = "auto",
-        style: Optional[List[str]] = None,
+        style: Optional[str] = None,
         colors: Optional[ColorConfig] = None,
         width: int = 1024,
         height: int = 1024,

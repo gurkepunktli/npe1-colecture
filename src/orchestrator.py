@@ -127,7 +127,7 @@ class ImageOrchestrator:
         """
         print(f"Generating image with {slide.ai_model} for: {keywords}")
         if slide.style:
-            print(f"  Style: {', '.join(slide.style)}")
+            print(f"  Style: {slide.style}")
         if slide.colors:
             print(f"  Colors: primary={slide.colors.primary}, secondary={slide.colors.secondary}")
 

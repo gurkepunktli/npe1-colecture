@@ -62,7 +62,7 @@ curl -X POST http://localhost:8080/generate-image \
     "title": "Digital Transformation",
     "bullets": [{"bullet": "Cloud Migration"}, {"bullet": "AI Integration"}],
     "ImageKeywords": ["technology", "innovation"],   // optional: explizite Keywords statt Auto-Extraktion
-    "style": ["modern", "minimal"],
+    "style": "flat_illustration",
     "image_mode": "auto",
     "ai_model": "auto"
   }'
@@ -71,20 +71,20 @@ curl -X POST http://localhost:8080/generate-image \
 ### GET /generate-image-simple
 Beispiel:
 ```
-GET /generate-image-simple?title=Digital+Transformation&style=modern,minimal&image_mode=ai_only&ai_model=auto&primary_color=%230066CC&secondary_color=%2300CC66
+GET /generate-image-simple?title=Digital+Transformation&style=flat_illustration&image_mode=ai_only&ai_model=auto&primary_color=%230066CC&secondary_color=%2300CC66
 ```
 
 ### POST /extract-keywords
 Liefert detaillierte und verfeinerte Keywords zur Kontrolle.
 
 ### Eingabefelder (POST /generate-image)
-- `title` (string) – Folientitel
-- `bullets` (array) – optional, Bullet-Points
-- `ImageKeywords` (array) – optional, explizite Keywords (überschreibt Auto-Extraktion)
-- `style` (array) – optional, kann auch Szenario-Keys enthalten (`flat_illustration`, `fine_line`, `photorealistic`)
+- `title` (string) - Folientitel
+- `bullets` (array) - optional, Bullet-Points
+- `ImageKeywords` (array) - optional, explizite Keywords (überschreibt Auto-Extraktion)
+- `style` (string) - optional, kann auch Szenario-Keys enthalten (`flat_illustration`, `fine_line`, `photorealistic`)
 - `image_mode` (`stock_only` | `ai_only` | `auto`) - Standard: `auto`
 - `ai_model` (`auto`=flux, `flux`, `imagen/banana`) - Standard: `auto`
-- `colors` (object) – optional, z. B. `{ "primary": "#0066CC", "secondary": "#00CC66" }`
+- `colors` (object) - optional, z. B. `{ "primary": "#0066CC", "secondary": "#00CC66" }`
 
 ### Image Modes
 - `stock_only`: nur Stock-Fotos, keine KI

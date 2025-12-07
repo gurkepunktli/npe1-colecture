@@ -24,7 +24,7 @@ class SlideInput(BaseModel):
     bullets: Optional[List[Dict[str, Any]]] = None
 
     # New parameters
-    style: Optional[List[str]] = None  # e.g., ["minimal", "modern", "professional"]
+    style: Optional[str] = None  # e.g., "modern" or scenario key
     image_mode: Literal["stock_only", "ai_only", "auto"] = "auto"
     colors: Optional[ColorConfig] = None
     ai_model: Literal["auto", "flux", "banana", "imagen"] = "auto"

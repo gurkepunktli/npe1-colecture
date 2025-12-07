@@ -64,7 +64,7 @@ async def generate_image(slide: SlideInput):
 @app.get("/generate-image-simple", response_model=ImageResult)
 async def generate_image_simple(
     title: Optional[str] = Query(None, description="Slide title (optional if keywords provided)"),
-    style: Optional[str] = Query(None, description="Comma-separated style values (e.g., 'modern,minimal')"),
+    style: Optional[str] = Query(None, description="Style value or scenario key (e.g., 'flat_illustration')"),
     image_mode: str = Query("auto", description="Image mode: stock_only, ai_only, or auto"),
     ai_model: str = Query("auto", description="AI model: auto, flux, or banana"),
     primary_color: Optional[str] = Query(None, description="Primary color (e.g., '#0066CC' or 'blue')"),
@@ -78,11 +78,6 @@ async def generate_image_simple(
         GET /generate-image-simple?title=Digital%20Transformation&style=modern,minimal&image_mode=ai_only&ai_model=imagen
     """
     try:
-        # Parse style
-        style_list = None
-        if style:
-            style_list = [s.strip() for s in style.split(",")]
-
         # Parse keywords
         keywords_list = None
         if keywords:
@@ -96,7 +91,7 @@ async def generate_image_simple(
         # Create SlideInput
         slide = SlideInput(
             title=title,
-            style=style_list,
+            style=style.strip() if style else None,
             image_mode=image_mode,  # type: ignore
             ai_model=ai_model,  # type: ignore
             colors=colors,
