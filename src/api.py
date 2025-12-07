@@ -32,6 +32,9 @@ if static_dir.exists():
 # Initialize orchestrator
 orchestrator = ImageOrchestrator()
 
+# Log PUBLIC_BASE_URL for visibility at startup
+print(f"[config] PUBLIC_BASE_URL={getattr(config, 'public_base_url', None)}")
+
 
 @app.get("/")
 async def root():
