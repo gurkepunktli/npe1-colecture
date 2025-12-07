@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from .config import config
 from .models import SlideInput, ImageResult, ColorConfig
 from .orchestrator import ImageOrchestrator
 from . import generated_cache
