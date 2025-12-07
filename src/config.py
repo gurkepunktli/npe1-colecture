@@ -38,7 +38,7 @@ class Config(BaseModel):
     gemini_image_model: str = "google/gemini-2.5-flash-image-preview"
 
     # Public base URL for serving generated images (optional, hardcoded fallback)
-    public_base_url: Optional[str] = os.getenv("PUBLIC_BASE_URL") or "http://192.168.100.8:8080"
+    public_base_url: Optional[str] = os.getenv("PUBLIC_BASE_URL") or "https://langchain.gurk.li"
 
 
 config = Config()
