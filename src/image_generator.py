@@ -118,10 +118,11 @@ class ImageGenerator:
         """
         try:
             self.last_error = None
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            endpoint = f"https://api.eu.bfl.ai/v1/{config.flux_model}"
+            async with httpx.AsyncClient(timeout=150.0) as client:
                 # Submit generation request
                 response = await client.post(
-                    f"https://api.eu.bfl.ai/v1/{config.flux_model}",
+                    endpoint,
                     headers={
                         "Content-Type": "application/json",
                         "x-key": config.flux_api_key
@@ -136,6 +137,10 @@ class ImageGenerator:
                         "output_format": "jpeg"
                     }
                 )
+                print(f"[Flux] submit url={endpoint} status={response.status_code}")
+                submit_body = response.text[:500] if hasattr(response, "text") else ""
+                if submit_body:
+                    print(f"[Flux] submit body (trunc): {submit_body}")
                 response.raise_for_status()
                 data = response.json()
 
@@ -144,11 +149,15 @@ class ImageGenerator:
                     return None
 
                 # Wait for generation to complete
-                await asyncio.sleep(15)
+                await asyncio.sleep(20)
 
                 # Poll for result
-                for attempt in range(10):
+                for attempt in range(20):
                     poll_response = await client.get(polling_url)
+                    print(f"[Flux] poll attempt={attempt+1} status={poll_response.status_code}")
+                    poll_text = poll_response.text[:500] if hasattr(poll_response, "text") else ""
+                    if poll_text:
+                        print(f"[Flux] poll body (trunc): {poll_text}")
                     poll_response.raise_for_status()
                     poll_data = poll_response.json()
 
@@ -159,7 +168,7 @@ class ImageGenerator:
                     elif status == "failed":
                         return None
 
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(4)
 
                 return None
 
@@ -247,7 +256,7 @@ class ImageGenerator:
     async def generate_image(
         self,
         prompt: str,
-        model: Literal["flux", "banana"] = "flux",
+        model: Literal["auto", "flux", "banana", "imagen"] = "auto",
         width: int = 1024,
         height: int = 1024
     ) -> Optional[str]:
@@ -264,7 +273,7 @@ class ImageGenerator:
             URL of generated image or None if failed
         """
         self.last_error = None
-        if model == "flux":
+        if model in ("auto", "flux"):
             return await self.generate_with_flux(prompt, width, height)
         elif model in ("banana", "imagen"):
             return await self.generate_with_imagen(prompt, width, height)
@@ -276,7 +285,7 @@ class ImageGenerator:
     async def generate_from_keywords(
         self,
         keywords: str,
-        model: Literal["flux", "banana"] = "flux",
+        model: Literal["auto", "flux", "banana", "imagen"] = "auto",
         style: Optional[List[str]] = None,
         colors: Optional[ColorConfig] = None,
         width: int = 1024,

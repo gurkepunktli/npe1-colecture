@@ -129,9 +129,14 @@ class ImageOrchestrator:
         if slide.colors:
             print(f"  Colors: primary={slide.colors.primary}, secondary={slide.colors.secondary}")
 
+        # Select model: "banana" stays banana; "auto" defaults to flux; otherwise pass through.
+        ai_model = slide.ai_model
+        if ai_model == "auto":
+            ai_model = "flux"
+
         image_url = await self.image_generator.generate_from_keywords(
             keywords=keywords,
-            model=slide.ai_model,
+            model=ai_model,
             style=slide.style,
             colors=slide.colors,
             slide=slide
