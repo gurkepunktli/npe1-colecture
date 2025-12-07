@@ -9,11 +9,11 @@ from langchain_openai import ChatOpenAI
 
 from .config import config
 from .models import ColorConfig, SlideInput
-from .prompts import SCENARIO_PROMPTS
+from .prompts import SCENARIO_PROMPTS, GENERATION_PROMPT_SYSTEM
 
 
 class ImageGenerator:
-    """Generates images using AI when stock photos don't match."""
+    """Generates images using AI when stock photos do not match."""
 
     def __init__(self):
         """Initialize the image generator."""
@@ -25,14 +25,7 @@ class ImageGenerator:
         )
 
         self.prompt_template = ChatPromptTemplate.from_messages([
-            ("system", """Erstelle basierend auf Keywords, Style und optionalen Farben einen Prompt aus einem Satz, um daraus ein passendes Bild zu generieren.
-
-Beachte, dass es für PowerPoint-Folie geeignet sein muss. Also keine Fotos, die nur für den privaten Bereich geeignet sind.
-
-{style_instruction}
-{color_instruction}
-
-Antworte mit genau einem Satz."""),
+            ("system", GENERATION_PROMPT_SYSTEM),
             ("human", "Keywords: {keywords}")
         ])
 

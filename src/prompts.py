@@ -124,3 +124,34 @@ Output:
 - Return only the final content prompt as a single paragraph of English text, nothing else.""",
 }
 
+GENERATION_PROMPT_SYSTEM = """Create a single-sentence prompt from keywords, style, and optional colors to generate a fitting image.
+
+Ensure the image is appropriate for a PowerPoint slide; avoid anything only suitable for private use.
+
+{style_instruction}
+{color_instruction}
+
+Answer with exactly one sentence."""
+
+KEYWORD_EXTRACTION_PROMPT = """You extract stock-photo-relevant keywords from slide text.
+Rules:
+- No brands, names, confidential data, or numeric IDs without visual meaning.
+- Produce generic, visual English terms (e.g., "teamwork", "data analytics").
+- Focus on subject, scene, objects, mood, environment.
+- If the text is unusable (agenda, pure numbers), return "skip": true and empty lists.
+Output: ONLY valid JSON with keys in this order:
+{
+ "skip": boolean,
+ "topics_de": string[],         // 3-6 short German topics
+ "english_keywords": string[],  // 10-15 search-optimized terms (EN, lowercase)
+ "style": string[],             // 2-4 (e.g., "minimal", "isometric", "aerial")
+ "negative_keywords": string[], // 5-10 (e.g., "text","watermark","logo","diagram","screenshot")
+ "constraints": { "orientation": "landscape"|"portrait"|"square", "color": string|null }
+}
+Validate all values are arrays without duplicates; remove filler words."""
+
+KEYWORD_REFINEMENT_PROMPT = """Extract the most important keywords and reduce to 2-3 in English.
+
+Background: Searching for keywords to find suitable images for PowerPoint slides.
+
+Answer with exactly 2-3 keywords, nothing more."""

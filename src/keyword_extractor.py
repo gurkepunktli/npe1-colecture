@@ -7,6 +7,7 @@ from langchain_openai import ChatOpenAI
 
 from .config import config
 from .models import SlideInput, KeywordExtractionResult
+from .prompts import KEYWORD_EXTRACTION_PROMPT, KEYWORD_REFINEMENT_PROMPT
 
 
 class KeywordExtractor:
@@ -21,32 +22,13 @@ class KeywordExtractor:
         )
 
         self.extraction_prompt = ChatPromptTemplate.from_messages([
-            ("system", """Du extrahierst aus Folientexten bildrelevante Stockfoto-Keywords.
-Regeln:
-- Keine Marken, Namen, vertrauliche Daten, Zahlen-/IDs ohne Bildbezug.
-- Erzeuge generische, visuelle Begriffe auf EN (z. B. "teamwork", "data analytics").
-- Fokussiere auf Motiv, Szene, Objekt, Stimmung, Umgebung.
-- Wenn Text unbrauchbar (Agenda, reiner Zahlenmix), liefere "skip": true und leere Listen.
-Output: NUR valides JSON mit Schluesseln in dieser Reihenfolge:
-{{
- "skip": boolean,
- "topics_de": string[],         // 3-6 kurze deutsche Themen
- "english_keywords": string[],  // 10-15 suchoptimierte Begriffe (EN, klein)
- "style": string[],             // 2-4 (z. B. "minimal", "isometric", "aerial")
- "negative_keywords": string[], // 5-10 (z. B. "text","watermark","logo","diagram","screenshot")
- "constraints": {{ "orientation": "landscape"|"portrait"|"square", "color": string|null }}
-}}
-Pruefe, dass alle Werte arrays ohne Duplikate sind; entferne Fuellwoerter."""),
+            ("system", KEYWORD_EXTRACTION_PROMPT),
             ("human", "{text}")
         ])
 
         self.refinement_prompt = ChatPromptTemplate.from_messages([
-            ("system", """Extrahiere die wichtigsten Keywords und reduziere auf 2-3 Stück auf Englisch.
-
-Hintergrund: Suche nach Keywords für passende Bilder auf Folien von PowerPoint.
-
-Antwort mit 2-3 Keywords. Bspw. "Hund, Wiese", nicht mehr. Es muss genau so geantwortet werden!"""),
-            ("human", "Sämtliche gefundene Keywords: {keywords}")
+            ("system", KEYWORD_REFINEMENT_PROMPT),
+            ("human", "All found keywords: {keywords}")
         ])
 
     def extract_keywords(self, slide: SlideInput) -> tuple[KeywordExtractionResult, str]:
