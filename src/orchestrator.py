@@ -51,6 +51,12 @@ class ImageOrchestrator:
                 keywords=refined_keywords
             )
 
+        # If style enforces AI-only (scenario keys), skip stock search
+        style_key = (slide.style or "").lower()
+        if style_key in ("flat_illustration", "fine_line"):
+            print(f"Style '{style_key}' forces AI generation, skipping stock search")
+            return await self._generate_ai_image(slide, refined_keywords)
+
         # Check if AI-only mode
         if slide.image_mode == "ai_only":
             print("AI-only mode: Skipping stock photo search")
