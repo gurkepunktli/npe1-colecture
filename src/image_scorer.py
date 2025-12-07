@@ -164,8 +164,13 @@ class ImageScorer:
 
         # Handle exceptions
         if isinstance(quality_score, Exception):
-            self.logger.warning("Quality scoring failed: %s", quality_score)
-            quality_score = 0.5
+            msg = str(quality_score).lower()
+            if "daily usage limit" in msg:
+                self.logger.warning("Quality scoring skipped (quota): %s", quality_score)
+                quality_score = config.min_quality_score
+            else:
+                self.logger.warning("Quality scoring failed: %s", quality_score)
+                quality_score = 0.5
 
         if isinstance(presentation_score, Exception):
             presentation_score = None
