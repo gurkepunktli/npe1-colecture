@@ -6,6 +6,7 @@ SCENARIO_PROMPTS = {
 
 Goal:
 From the JSON description of a lecture slide, create a short textual description of what should be visible in an illustration that supports the main idea of the slide. This text will later be combined with separate style, layout and negative prompt blocks.
+Style requirement: In a modern flat vector illustration style, professional yet friendly, with soft rounded shapes, minimal details and smooth solid colours, using a limited colour palette based on the color codes mentioned.
 
 Input:
 - You will receive a single JSON object that represents one slide.
@@ -46,6 +47,7 @@ Output:
 
 Goal:
 From the JSON description of a lecture slide, create a short textual description of what should be visible in an illustration that supports the main idea of the slide. This text will later be combined with separate style, layout and negative prompt blocks.
+Style requirement: In a clean fine-line illustration style with thin consistent outlines, mostly line art with only very subtle flat colour accents, lots of white space and very minimal details, using the respective color codes.
 
 Input:
 - You will receive a single JSON object that represents one slide.
@@ -86,6 +88,7 @@ Output:
 
 Goal:
 From the JSON description of a lecture slide, create a short textual description of what should be visible in an illustration that supports the main idea of the slide. This text will later be combined with separate style, layout and negative prompt blocks.
+Style requirement: In a clean, high-quality photorealistic style with neutral, studio-like lighting, low noise and a calm, slightly desaturated colour palette based on the respective color items, resembling a professional stock photo suitable for presentation slides.
 
 Input:
 - You will receive a single JSON object that represents one slide.
