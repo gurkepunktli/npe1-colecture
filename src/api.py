@@ -93,7 +93,7 @@ async def generate_image_simple(
             image_mode=image_mode,  # type: ignore
             ai_model=ai_model,  # type: ignore
             colors=colors,
-            unsplashSearchTerms=keywords_list
+            image_keywords=keywords_list
         )
 
         result = await orchestrator.process_slide(slide)

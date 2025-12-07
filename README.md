@@ -61,6 +61,7 @@ curl -X POST http://localhost:8080/generate-image \
   -d '{
     "title": "Digital Transformation",
     "bullets": [{"bullet": "Cloud Migration"}, {"bullet": "AI Integration"}],
+    "ImageKeywords": ["technology", "innovation"],   // optional: explizite Keywords statt Auto-Extraktion
     "style": ["modern", "minimal"],
     "image_mode": "auto",
     "ai_model": "flux"
@@ -75,6 +76,15 @@ GET /generate-image-simple?title=Digital+Transformation&style=modern,minimal&ima
 
 ### POST /extract-keywords
 Liefert detaillierte und verfeinerte Keywords zur Kontrolle.
+
+### Eingabefelder (POST /generate-image)
+- `title` (string) – Folientitel
+- `bullets` (array) – optional, Bullet-Points
+- `ImageKeywords` (array) – optional, explizite Keywords (überschreibt Auto-Extraktion)
+- `style` (array) – optional, kann auch Szenario-Keys enthalten (`flat_illustration`, `fine_line`, `photorealistic`)
+- `image_mode` (`stock_only` | `ai_only` | `auto`) – Standard: `auto`
+- `ai_model` (`flux` | `imagen/banana`) – Standard: `flux`
+- `colors` (object) – optional, z. B. `{ "primary": "#0066CC", "secondary": "#00CC66" }`
 
 ### Image Modes
 - `stock_only`: nur Stock-Fotos, keine KI

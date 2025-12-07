@@ -1,6 +1,6 @@
 """Data models for the image generator."""
 from typing import List, Optional, Dict, Any, Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ColorConfig(BaseModel):
@@ -13,9 +13,14 @@ class ColorConfig(BaseModel):
 class SlideInput(BaseModel):
     """Input data for a single slide."""
 
+    model_config = ConfigDict(populate_by_name=True)
+
     title: Optional[str] = None
     sources: Optional[List[Dict[str, str]]] = None
-    unsplashSearchTerms: Optional[List[str]] = None
+    image_keywords: Optional[List[str]] = Field(
+        default=None,
+        alias="ImageKeywords"
+    )
     bullets: Optional[List[Dict[str, Any]]] = None
 
     # New parameters

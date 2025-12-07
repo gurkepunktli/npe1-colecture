@@ -42,8 +42,8 @@ class KeywordExtractor:
             Tuple of (detailed extraction result, refined keywords string)
         """
         # If keywords were explicitly provided, skip LLM extraction/refinement
-        if slide.unsplashSearchTerms:
-            explicit_keywords = [k for k in slide.unsplashSearchTerms if k]
+        if slide.image_keywords:
+            explicit_keywords = [k for k in slide.image_keywords if k]
             extraction_obj = KeywordExtractionResult(
                 skip=False,
                 english_keywords=explicit_keywords,
@@ -76,7 +76,7 @@ class KeywordExtractor:
             # Fallback to simple extraction
             extraction_obj = KeywordExtractionResult(
                 skip=False,
-                english_keywords=slide.unsplashSearchTerms or [],
+                english_keywords=slide.image_keywords or [],
             )
 
         # Step 2: Refine to 2-3 most important keywords
