@@ -1,7 +1,9 @@
 """FastAPI application for the image generator service."""
+from pathlib import Path
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .models import SlideInput, ImageResult, ColorConfig
 from .orchestrator import ImageOrchestrator
@@ -21,6 +23,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static assets (e.g., error.png)
+static_dir = Path(__file__).resolve().parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Initialize orchestrator
 orchestrator = ImageOrchestrator()

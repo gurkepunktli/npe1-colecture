@@ -167,8 +167,11 @@ class ImageOrchestrator:
         else:
             error_detail = self.image_generator.last_error or "Image generation failed"
             print(f"Image generation failed: {error_detail}")
+            error_url = "/static/error.png"
+            if getattr(config, "public_base_url", None):
+                error_url = f"{config.public_base_url.rstrip('/')}{error_url}"
             return ImageResult(
-                url="",
+                url=error_url,
                 source="failed",
                 keywords=keywords,
                 error=error_detail
