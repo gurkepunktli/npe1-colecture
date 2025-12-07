@@ -6,6 +6,7 @@ from .image_search import ImageSearcher
 from .image_scorer import ImageScorer
 from .image_generator import ImageGenerator
 from . import generated_cache
+from .config import config
 
 
 class ImageOrchestrator:
