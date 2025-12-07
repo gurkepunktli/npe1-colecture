@@ -93,6 +93,7 @@ class ImageOrchestrator:
             print(f"Selected stock image from {best_image.image_ref.source}")
             print(f"  Quality: {best_image.scores.quality_score:.2f}")
             print(f"  Presentation fit: {best_image.scores.presentation_score}")
+            print(f"  URL: {best_image.image_ref.full_url}")
 
             return ImageResult(
                 url=best_image.image_ref.full_url,
