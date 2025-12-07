@@ -1,117 +1,79 @@
-# NPE1 Colecture - Image Generator
+# NPE1 Colecture – Image Generator
 
 AI-powered image finder and generator for PowerPoint slides. Takes slide text, extracts visual keywords, searches stock photos, scores quality and safety, and falls back to AI image generation when needed.
 
-## Was das System macht
+## Overview
 - Pipeline: Keywords extrahieren -> Unsplash/Pexels suchen -> Qualitaet/Safety/Praesentationsfit scoren -> ggf. KI-Bild generieren (Flux oder Gemini Image Preview via OpenRouter) -> bestes Bild liefern.
-- FastAPI-Service mit automatischer Swagger UI.
-- LLM-Aufrufe laufen ueber OpenRouter (Gemini/Claude); Safety/Qualitaet via SightEngine; optionaler Presentation-Scoring-Service.
+- FastAPI-Service mit Swagger UI (`/docs`).
+- LLM via OpenRouter (Gemini/Claude); Safety/Qualitaet via SightEngine; optional Presentation-Scoring-Service.
 
-## Features
-- Keyword-Extraktion (Gemini/Claude) mit Skip-Logic fuer ungeeignete Slides.
-- Multi-Source-Suche (Unsplash, Pexels) inkl. Deduplizierung.
-- Scoring: technische Qualitaet, Nudity/Safety, optional Praesentationsfit; Schwellwerte konfigurierbar.
-- KI-Bildgenerierung als Fallback (Flux oder Gemini Image Preview).
-- REST-API + vereinfachter GET-Endpunkt fuer schnelle Tests.
-
-## Voraussetzungen / API Keys
+## API Keys
 | Service | Env Var | Zweck |
 |---------|---------|-------|
-| OpenRouter | `OPENROUTER_API_KEY` | LLM-Zugriff (Gemini/Claude, auch fuer Gemini Image Preview) |
+| OpenRouter | `OPENROUTER_API_KEY` | LLM-Zugriff (Gemini/Claude, auch Gemini Image Preview) |
 | Unsplash | `UNSPLASH_ACCESS_KEY` | Stock-Suche |
 | Pexels | `PEXELS_API_KEY` | Stock-Suche |
 | SightEngine | `SIGHTENGINE_API_USER`, `SIGHTENGINE_API_SECRET` | Qualitaet + Nudity/Safety |
 | FLUX | `FLUX_API_KEY` | KI-Bildgenerierung (Flux) |
 
-Optional:
-- `SCORING_SERVICE_URL` - eigener Service fuer Praesentationsfit-Score
-- `MIN_PRESENTATION_SCORE` (Default 0.6), `MIN_QUALITY_SCORE` (0.7), `MIN_NUDITY_SAFE_SCORE` (0.99)
-- `PUBLIC_BASE_URL` - Basis-URL fuer ausgelieferte, gecachte data:-Bilder
-- `OPENROUTER_REFERER`, `OPENROUTER_TITLE` - von OpenRouter empfohlen
-- `FLUX_MODEL` - Flux-Endpunkt-Pfad, Default `flux-2-pro` (z. B. `flux-2-flex`, `flux-kontext-pro`, `flux-pro-1.1-ultra`, `flux-pro-1.1`, `flux-pro`, `flux-dev`)
+Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, `MIN_NUDITY_SAFE_SCORE`, `PUBLIC_BASE_URL`, `OPENROUTER_REFERER`, `OPENROUTER_TITLE`, `FLUX_MODEL` (z. B. `flux-2-pro`, `flux-2-flex`).
 
 ## Setup
+- **Local (Python)**: `python -m venv venv && venv\Scripts\activate` → `pip install -r requirements.txt` → `.env` aus `.env.example` füllen → `python run_server.py` (http://localhost:8080).
+- **Docker Compose**: `.env` füllen → `docker-compose up -d` → Logs `docker-compose logs -f` → Stop `docker-compose down`.
+- **Portainer**: Stack aus Repo `https://github.com/gurkepunktli/npe1-colecture`, Compose `docker-compose.yml`, Env Vars setzen, Deploy.
 
-### Lokale Entwicklung (Python)
-1) Virtualenv: `python -m venv venv && venv\Scripts\activate` (PowerShell)  
-2) Dependencies: `pip install -r requirements.txt`  
-3) Env: `cp .env.example .env` und Keys eintragen  
-4) Start: `python run_server.py` -> http://localhost:8080
+## API Usage
 
-### Docker Compose (Dev)
-1) `.env` anlegen und fuellen (`cp .env.example .env`).  
-2) Start: `docker-compose up -d`  
-3) Logs: `docker-compose logs -f`  
-4) Stop: `docker-compose down`
-
-### Portainer (Prod)
-Kurzfassung (Details in `PORTAINER.md`):
-1) Portainer -> Stacks -> Add stack  
-2) Repository: `https://github.com/gurkepunktli/npe1-colecture`, Compose path: `docker-compose.yml`  
-3) Environment Variables setzen (Keys s. oben)  
-4) Deploy, Logs pruefen, Port 8080 testen
-
-## Nutzung der API
-
-### POST /generate-image
-Minimalbeispiel:
-```bash
-curl -X POST http://localhost:8080/generate-image \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Digital Transformation",
-    "bullets": [{"bullet": "Cloud Migration"}, {"bullet": "AI Integration"}],
-    "ImageKeywords": ["technology", "innovation"],   // optional: explizite Keywords statt Auto-Extraktion
-    "style": "flat_illustration",
-    "image_mode": "auto",
-    "ai_model": "auto"
-  }'
+### POST /generate-image (JSON)
+```json
+{
+  "title": "Digital Transformation",
+  "bullets": [
+    {"bullet": "Cloud migration and SaaS adoption"},
+    {"bullet": "AI integration in business processes"}
+  ],
+  "ImageKeywords": ["technology", "innovation"],   // optional, überschreibt Auto-Extraktion
+  "style": "flat_illustration",                    // Stil oder Szenario-Key
+  "image_mode": "auto",                            // stock_only | ai_only | auto
+  "ai_model": "auto",                              // auto (=flux), flux, banana/imagen
+  "colors": { "primary": "#0066CC", "secondary": "#00CC66" }
+}
 ```
 
-### GET /generate-image-simple
-Beispiel:
+### GET /generate-image-simple (Query)
 ```
-GET /generate-image-simple?title=Digital+Transformation&style=flat_illustration&image_mode=ai_only&ai_model=auto&primary_color=%230066CC&secondary_color=%2300CC66
+/generate-image-simple?title=Digital+Transformation&style=flat_illustration&image_mode=ai_only&ai_model=auto&primary_color=%230066CC&secondary_color=%2300CC66&keywords=technology,innovation
 ```
 
-### POST /extract-keywords
-Liefert detaillierte und verfeinerte Keywords zur Kontrolle.
+### Fields (POST /generate-image)
+- `title` (string) – Folientitel
+- `bullets` (array) – optional, Bullet-Points
+- `ImageKeywords` (array) – optional, explizite Keywords (überschreibt Auto-Extraktion)
+- `style` (string) – optional, kann auch Szenario-Keys enthalten (`flat_illustration`, `fine_line`, `photorealistic`)
+- `image_mode` – `stock_only` | `ai_only` | `auto` (Default)
+- `ai_model` – `auto` (=flux), `flux`, `imagen/banana` (Default: auto)
+- `colors` (object) – optional, z. B. `{ "primary": "#0066CC", "secondary": "#00CC66" }`
 
-### Eingabefelder (POST /generate-image)
-- `title` (string) - Folientitel
-- `bullets` (array) - optional, Bullet-Points
-- `ImageKeywords` (array) - optional, explizite Keywords (überschreibt Auto-Extraktion)
-- `style` (string) - optional, kann auch Szenario-Keys enthalten (`flat_illustration`, `fine_line`, `photorealistic`)
-- `image_mode` (`stock_only` | `ai_only` | `auto`) - Standard: `auto`
-- `ai_model` (`auto`=flux, `flux`, `imagen/banana`) - Standard: `auto`
-- `colors` (object) - optional, z. B. `{ "primary": "#0066CC", "secondary": "#00CC66" }`
+### Image modes & sources
+- Modes: `stock_only` (nur Stock), `ai_only` (direkt KI), `auto` (Stock, dann KI-Fallback)
+- Response `source`: `stock_unsplash`, `stock_pexels`, `generated_flux`, `generated_imagen`, `none`, `failed`
 
-### Image Modes
-- `stock_only`: nur Stock-Fotos, keine KI
-- `ai_only`: direkt KI, keine Stock-Suche
-- `auto` (Default): Stock bevorzugt, KI als Fallback
-
-### Moegliche `source` Werte im Response
-- `stock_unsplash`, `stock_pexels`
-- `generated_flux`, `generated_imagen`
-- `none` (nichts Passendes gefunden, stock_only)
-- `failed` (Generierung fehlgeschlagen)
-
-## Architektur (Kurzueberblick)
-- `src/config.py` - Konfiguration/Env
-- `src/models.py` - Pydantic-Modelle
-- `src/keyword_extractor.py` - LangChain LLM-Extraktion
-- `src/image_search.py` - Unsplash/Pexels
-- `src/image_scorer.py` - Qualitaet/Safety/Presentation Scoring
-- `src/image_generator.py` - Flux/Gemini Image Preview
-- `src/orchestrator.py` - Pipeline-Steuerung
-- `src/api.py` - FastAPI-Endpunkte
-- `src/generated_cache.py` - In-Memory Cache fuer data:-Bilder
+## Architecture
+- `src/config.py` – Konfiguration/Env
+- `src/models.py` – Pydantic-Modelle
+- `src/keyword_extractor.py` – LangChain LLM-Extraktion
+- `src/image_search.py` – Unsplash/Pexels
+- `src/image_scorer.py` – Qualitaet/Safety/Presentation Scoring
+- `src/image_generator.py` – Flux/Gemini Image Preview
+- `src/orchestrator.py` – Pipeline-Steuerung
+- `src/api.py` – FastAPI-Endpunkte
+- `src/generated_cache.py` – In-Memory Cache fuer data:-Bilder / gecachte Downloads
 
 ## Troubleshooting
-- 401/403 bei Stock-Suche: API Keys fuer Unsplash/Pexels pruefen.
-- Leere oder failed-Responses: Logs checken, Qualitaets-Schwellen ggf. senken, optionalen Presentation-Scoring-Service deaktivieren (`SCORING_SERVICE_URL` entfernen).
-- KI-Generierung ohne Bild: Flux/Gemini-Key pruefen; bei `data:`-Antworten `PUBLIC_BASE_URL` setzen, falls die API extern erreichbar sein soll.
+- 401/403 bei Stock: Unsplash/Pexels Keys prüfen.
+- Leere/failed: Logs checken, Schwellen senken, optionalen Presentation-Scoring-Service entfernen.
+- KI ohne Bild: Flux/Gemini-Key prüfen; bei `data:`-Antworten `PUBLIC_BASE_URL` setzen; bei Flux-Polling Logs anschauen (Submit/Poll Status).
 
 ## License
 TBD
