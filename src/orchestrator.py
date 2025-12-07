@@ -175,6 +175,48 @@ class ImageOrchestrator:
                 except Exception as exc:
                     print(f"Failed to download/cache Flux image: {exc}")
 
+            # Nudity check for generated images (skip on errors/quotas)
+            nudity_score = None
+            try:
+                nudity_data = await self.image_scorer.check_nudity_sightengine(served_url)
+                nudity_score = nudity_data.get("suggestive_classes", {}).get("cleavage_categories", {}).get("none", 1.0)
+                print(f"Nudity score for generated image: {nudity_score}")
+            except Exception as exc:
+                print(f"Nudity check skipped/failed: {exc}")
+
+            # If unsafe, regenerate once with banana regardless of selected model
+            if nudity_score is not None and nudity_score < config.min_nudity_safe_score:
+                print("Generated image not safe enough, regenerating with banana")
+                retry_url = await self.image_generator.generate_from_keywords(
+                    keywords=keywords,
+                    model="banana",
+                    style=slide.style,
+                    colors=slide.colors,
+                    slide=slide
+                )
+                if retry_url:
+                    served_url = retry_url
+                    if retry_url.startswith("data:"):
+                        try:
+                            image_id = generated_cache.store_data_url(retry_url)
+                            path = f"/generated/{image_id}"
+                            served_url = f"{base_url}{path}"
+                        except Exception as exc:
+                            print(f"Failed to cache retry data URL: {exc}")
+                    else:
+                        # No download/cache for banana; return as is
+                        served_url = retry_url
+                    print(f"Regenerated image with banana: {served_url}")
+                    source = "generated_banana"
+                    return ImageResult(
+                        url=served_url,
+                        source=source,
+                        keywords=keywords,
+                        error=None
+                    )
+                else:
+                    print("Retry generation with banana failed")
+
             print(f"Generated image: {served_url}")
             source = f"generated_{slide.ai_model}"
             return ImageResult(
