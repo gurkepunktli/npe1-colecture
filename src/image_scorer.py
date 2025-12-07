@@ -61,17 +61,29 @@ class ImageScorer:
             Nudity check results
         """
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                "https://api.sightengine.com/1.0/check.json",
-                params={
-                    "models": "nudity-2.1",
-                    "api_user": config.sightengine_api_user,
-                    "api_secret": config.sightengine_api_secret,
-                    "url": image_url
-                }
-            )
-            response.raise_for_status()
-            data = response.json()
+            try:
+                response = await client.get(
+                    "https://api.sightengine.com/1.0/check.json",
+                    params={
+                        "models": "nudity-2.1",
+                        "api_user": config.sightengine_api_user,
+                        "api_secret": config.sightengine_api_secret,
+                        "url": image_url
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+            except httpx.HTTPStatusError as exc:
+                body = exc.response.text[:200] if exc.response is not None else ""
+                msg = body.lower()
+                if "daily usage limit" in msg:
+                    self.logger.warning(
+                        "Sightengine nudity skipped (quota): status=%s body=%s",
+                        exc.response.status_code if exc.response else "n/a",
+                        body,
+                    )
+                    return {}
+                raise
 
         nudity_data = data.get("nudity", {})
         self.logger.info(
