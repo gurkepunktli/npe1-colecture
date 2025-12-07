@@ -162,9 +162,15 @@ class ImageGenerator:
                     poll_data = poll_response.json()
 
                     status = poll_data.get("status")
-                    if status == "succeeded":
-                        result = poll_data.get("result", {})
-                        return result.get("sample")
+
+                    # Some Flux responses use "Ready" instead of "succeeded" and put the URL under result.sample
+                    if status in ("succeeded", "Ready"):
+                        result = poll_data.get("result", {}) or {}
+                        sample_url = result.get("sample") or poll_data.get("sample")
+                        if sample_url:
+                            return sample_url
+                        # Fallback: return whatever URL is available
+                        return None
                     elif status == "failed":
                         return None
 
