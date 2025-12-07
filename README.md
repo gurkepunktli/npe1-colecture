@@ -54,15 +54,30 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - Response `source`: `stock_unsplash`, `stock_pexels`, `generated_flux`, `generated_imagen`, `none`, `failed`
 
 ## Architecture
-- `src/config.py` – configuration/env
-- `src/models.py` – Pydantic models
-- `src/keyword_extractor.py` – LLM keyword extraction
-- `src/image_search.py` – Unsplash/Pexels
-- `src/image_scorer.py` – quality/safety/presentation scoring
-- `src/image_generator.py` – Flux/Gemini image
-- `src/orchestrator.py` – pipeline orchestration
-- `src/api.py` – FastAPI endpoints
-- `src/generated_cache.py` – in-memory cache for data URLs/downloads
+- `src/config.py` - configuration/env
+- `src/models.py` - Pydantic models
+- `src/keyword_extractor.py` - LLM keyword extraction
+- `src/image_search.py` - Unsplash/Pexels
+- `src/image_scorer.py` - quality/safety/presentation scoring
+- `src/image_generator.py` - Flux/Gemini image
+- `src/orchestrator.py` - pipeline orchestration
+- `src/api.py` - FastAPI endpoints
+- `src/generated_cache.py` - in-memory cache for data URLs/downloads
+
+## Flow (mit externen Diensten)
+- Client -> FastAPI `/generate-image`
+- Orchestrator: ggf. Uebersetzung ins Englische, Szenario-Check (flat_illustration/fine_line -> AI-only)
+- KeywordExtractor (OpenRouter LLM) -> Keywords/skip
+- Stock-Suche (Unsplash/Pexels) falls erlaubt
+- Scoring (SightEngine: quality/nudity; optional `scoring_service_url`)
+- Wenn Stock geeignet: bestes Bild, URL im Log
+- Sonst KI:
+  - Prompt-Bau (OpenRouter LLM, Szenario/Style/Colors, Negativ-Prompt)
+  - Flux (api.eu.bfl.ai/v1/{FLUX_MODEL}); bei flat_illustration: Banana (Imagen)
+  - Polling, Download, Cache unter `/generated/{id}` (mit `PUBLIC_BASE_URL`, sonst Fallback)
+- Nudity-Check auf generiertem Bild (SightEngine, skip bei Quota/Fehler)
+- Bei unsafe (< `MIN_NUDITY_SAFE_SCORE`): ein Retry mit Banana
+- Fallback bei Fehler: `/static/error.png`
 
 ## Troubleshooting
 - 401/403 stock: check Unsplash/Pexels keys.
