@@ -37,8 +37,8 @@ class Config(BaseModel):
     claude_model: str = "anthropic/claude-3.5-haiku"
     gemini_image_model: str = "google/gemini-2.5-flash-image-preview"
 
-    # Public base URL for serving generated images (optional)
-    public_base_url: Optional[str] = os.getenv("PUBLIC_BASE_URL")
+    # Public base URL for serving generated images (optional, hardcoded fallback)
+    public_base_url: Optional[str] = os.getenv("PUBLIC_BASE_URL") or "http://192.168.100.8:8080"
 
 
 config = Config()
