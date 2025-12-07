@@ -1,6 +1,10 @@
 """Main orchestration logic for image generation pipeline."""
 from typing import Optional
 import httpx
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
 from .models import SlideInput, ImageResult
 from .keyword_extractor import KeywordExtractor
 from .image_search import ImageSearcher
@@ -19,6 +23,15 @@ class ImageOrchestrator:
         self.image_searcher = ImageSearcher()
         self.image_scorer = ImageScorer()
         self.image_generator = ImageGenerator()
+        self.translator_llm = ChatOpenAI(
+            model=config.gemini_model,
+            openai_api_base="https://openrouter.ai/api/v1",
+            openai_api_key=config.openrouter_api_key,
+        )
+        self.translation_prompt = ChatPromptTemplate.from_messages([
+            ("system", "Translate the following text to English. Return only the translated text."),
+            ("human", "{text}")
+        ])
 
     async def process_slide(self, slide: SlideInput) -> ImageResult:
         """
@@ -38,6 +51,8 @@ class ImageOrchestrator:
         """
         print(f"Processing slide: {slide.title}")
         print(f"Image mode: {slide.image_mode}, AI model: {slide.ai_model}")
+
+        slide = await self._ensure_english(slide)
 
         # Step 1: Extract keywords
         extraction_result, refined_keywords = self.keyword_extractor.extract_keywords(slide)
@@ -237,3 +252,56 @@ class ImageOrchestrator:
                 keywords=keywords,
                 error=error_detail
             )
+
+    async def _ensure_english(self, slide: SlideInput) -> SlideInput:
+        """
+        Ensure title and bullets are in English; translate if needed.
+        """
+        try:
+            texts = []
+            if slide.title:
+                texts.append(slide.title)
+            if slide.bullets:
+                texts.extend([b.get("bullet", "") for b in slide.bullets if b.get("bullet")])
+
+            all_text = " ".join([t for t in texts if t]).strip().lower()
+            if self._is_probably_english(all_text):
+                return slide
+
+            def translate_text(text: str) -> str:
+                chain = self.translation_prompt | self.translator_llm | StrOutputParser()
+                return chain.invoke({"text": text}).strip()
+
+            new_title = translate_text(slide.title) if slide.title else None
+            new_bullets = []
+            if slide.bullets:
+                for bullet in slide.bullets:
+                    txt = bullet.get("bullet")
+                    if txt:
+                        bullet = bullet.copy()
+                        bullet["bullet"] = translate_text(txt)
+                    new_bullets.append(bullet)
+
+            slide_dict = slide.model_dump()
+            slide_dict["title"] = new_title
+            slide_dict["bullets"] = new_bullets
+            translated = SlideInput(**slide_dict)
+            print("Translated slide content to English.")
+            return translated
+        except Exception as exc:
+            print(f"Translation skipped due to error: {exc}")
+            return slide
+
+    def _is_probably_english(self, text: str) -> bool:
+        """
+        Heuristic check for English vs. German.
+        """
+        if not text:
+            return True
+        german_markers = [" und ", " der ", " die ", " das ", " mit ", " bitte", "zusammenfassung", "fragen"]
+        umlauts = ["ä", "ö", "ü", "ß"]
+        if any(c in text for c in umlauts):
+            return False
+        if any(marker in text for marker in german_markers):
+            return False
+        return True
