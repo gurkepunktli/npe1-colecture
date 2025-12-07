@@ -1,5 +1,6 @@
 """Main orchestration logic for image generation pipeline."""
 from typing import Optional
+import httpx
 from .models import SlideInput, ImageResult
 from .keyword_extractor import KeywordExtractor
 from .image_search import ImageSearcher
@@ -155,6 +156,21 @@ class ImageOrchestrator:
                         served_url = path
                 except Exception as exc:
                     print(f"Failed to cache data URL: {exc}")
+            elif ai_model == "flux" and image_url.startswith("http"):
+                # Download Flux image and serve via generated cache
+                try:
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        resp = await client.get(image_url)
+                        resp.raise_for_status()
+                        media_type = resp.headers.get("content-type", "application/octet-stream")
+                        image_id = generated_cache.store_bytes(resp.content, media_type)
+                        path = f"/generated/{image_id}"
+                        if getattr(config, "public_base_url", None):
+                            served_url = f"{config.public_base_url.rstrip('/')}{path}"
+                        else:
+                            served_url = path
+                except Exception as exc:
+                    print(f"Failed to download/cache Flux image: {exc}")
 
             print(f"Generated image: {served_url}")
             source = f"generated_{slide.ai_model}"

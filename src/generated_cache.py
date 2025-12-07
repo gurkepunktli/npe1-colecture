@@ -53,3 +53,19 @@ def store_data_url(data_url: str) -> str:
 def get_image(image_id: str) -> Optional[CachedImage]:
     """Retrieve a cached image by ID."""
     return _STORE.get(image_id)
+
+
+def store_bytes(data: bytes, media_type: str = "application/octet-stream") -> str:
+    """
+    Store raw bytes and return a short ID.
+
+    Args:
+        data: Binary image data
+        media_type: MIME type (e.g., image/jpeg)
+
+    Returns:
+        Image ID usable in generated image endpoint
+    """
+    image_id = uuid.uuid4().hex
+    _STORE[image_id] = CachedImage(data=data, media_type=media_type or "application/octet-stream")
+    return image_id
