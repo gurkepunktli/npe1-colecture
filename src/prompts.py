@@ -155,3 +155,13 @@ KEYWORD_REFINEMENT_PROMPT = """Extract the most important keywords and reduce to
 Background: Searching for keywords to find suitable images for PowerPoint slides.
 
 Answer with exactly 2-3 keywords, nothing more."""
+
+# Negative prompt to avoid undesired elements in generated images.
+NEGATIVE_PROMPT = (
+    "Negative prompt: No text, no lettering, no captions, no watermarks, no logos, "
+    "no brands, no cluttered background, no noisy textures, no heavy gradients, "
+    "no ultra-realistic rendering beyond the chosen style, no strong shadows, "
+    "no dark background, no crowded scene, no user interface screenshots, "
+    "no specific or labelled diagrams or frameworks such as Scrum boards or official process charts, "
+    "only abstract or generic shapes to suggest processes."
+)

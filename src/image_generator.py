@@ -9,7 +9,7 @@ from langchain_openai import ChatOpenAI
 
 from .config import config
 from .models import ColorConfig, SlideInput
-from .prompts import SCENARIO_PROMPTS, GENERATION_PROMPT_SYSTEM
+from .prompts import SCENARIO_PROMPTS, GENERATION_PROMPT_SYSTEM, NEGATIVE_PROMPT
 
 
 class ImageGenerator:
@@ -300,8 +300,9 @@ class ImageGenerator:
         """
         self.last_error = None
         prompt = await self.create_generation_prompt(keywords, style, colors, slide)
-        print(f"Generated prompt for {model}: {prompt}")
-        url = await self.generate_image(prompt, model, width, height)
+        final_prompt = f"{prompt} {NEGATIVE_PROMPT}".strip()
+        print(f"Generated prompt for {model}: {final_prompt}")
+        url = await self.generate_image(final_prompt, model, width, height)
         if url is None and self.last_error is None:
             self.last_error = "Image generation returned no result"
         return url
