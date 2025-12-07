@@ -17,6 +17,8 @@ class Config(BaseModel):
     sightengine_api_user: str = os.getenv("SIGHTENGINE_API_USER", "")
     sightengine_api_secret: str = os.getenv("SIGHTENGINE_API_SECRET", "")
     flux_api_key: str = os.getenv("FLUX_API_KEY", "")
+    # FLUX model endpoint path (e.g., "flux-2-pro", "flux-2-flex", "flux-pro-1.1")
+    flux_model: str = os.getenv("FLUX_MODEL", "flux-2-pro")
 
     # Service URLs
     scoring_service_url: Optional[str] = os.getenv("SCORING_SERVICE_URL")
@@ -33,7 +35,6 @@ class Config(BaseModel):
     # Model configurations
     gemini_model: str = "google/gemini-2.0-flash-001"
     claude_model: str = "anthropic/claude-3.5-haiku"
-    flux_model: str = "flux-2-pro"
     gemini_image_model: str = "google/gemini-2.5-flash-image-preview"
 
     # Public base URL for serving generated images (optional)

@@ -28,6 +28,7 @@ Optional:
 - `MIN_PRESENTATION_SCORE` (Default 0.6), `MIN_QUALITY_SCORE` (0.7), `MIN_NUDITY_SAFE_SCORE` (0.99)
 - `PUBLIC_BASE_URL` - Basis-URL fuer ausgelieferte, gecachte data:-Bilder
 - `OPENROUTER_REFERER`, `OPENROUTER_TITLE` - von OpenRouter empfohlen
+- `FLUX_MODEL` - Flux-Endpunkt-Pfad, Default `flux-2-pro` (z. B. `flux-2-flex`, `flux-kontext-pro`, `flux-pro-1.1-ultra`, `flux-pro-1.1`, `flux-pro`, `flux-dev`)
 
 ## Setup
 

@@ -103,7 +103,7 @@ Antworte mit genau einem Satz."""),
             async with httpx.AsyncClient(timeout=120.0) as client:
                 # Submit generation request
                 response = await client.post(
-                    "https://api.bfl.ai/v1/flux-2-pro",
+                    f"https://api.bfl.ai/v1/{config.flux_model}",
                     headers={
                         "Content-Type": "application/json",
                         "x-key": config.flux_api_key
