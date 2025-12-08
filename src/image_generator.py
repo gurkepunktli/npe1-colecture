@@ -228,7 +228,7 @@ class ImageGenerator:
                     response_modalities=['IMAGE'],
                     image_config=types.ImageConfig(
                         aspect_ratio="1:1",
-                        image_size="2K"
+                        image_size="1K"
                     ),
                 )
             )
