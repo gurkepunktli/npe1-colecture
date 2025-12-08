@@ -208,8 +208,19 @@ class ImageGenerator:
         try:
             self.last_error = None
 
-            # Initialize Google GenAI client with API key
-            client = genai.Client(api_key=config.google_ai_studio_api_key)
+            # Validate API key
+            api_key = config.google_ai_studio_api_key
+            if not api_key or api_key.strip() == "":
+                self.last_error = "Google AI Studio API key not configured (empty or missing)"
+                print(f"[Google AI Studio SDK] {self.last_error}")
+                return None
+
+            # Debug: Log API key length (not the actual key for security)
+            print(f"[Google AI Studio SDK] API key configured (length: {len(api_key)})")
+
+            # Initialize Google GenAI client with explicit API key
+            # The SDK expects either api_key parameter or GEMINI_API_KEY/GOOGLE_API_KEY env var
+            client = genai.Client(api_key=api_key)
 
             # Generate image using official SDK
             response = client.models.generate_content(
