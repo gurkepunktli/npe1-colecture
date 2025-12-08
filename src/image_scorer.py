@@ -111,11 +111,6 @@ class ImageScorer:
         if not endpoint.endswith("/analyze"):
             endpoint = f"{endpoint}/analyze"
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            image_response = await client.get(image_url)
-            image_response.raise_for_status()
-            image_bytes = image_response.content
-
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
                 endpoint,
@@ -123,7 +118,11 @@ class ImageScorer:
                     "threshold": config.nudity_service_threshold,
                     "clip_model": config.nudity_service_model,
                 },
-                files={"file": ("image.jpg", image_bytes)}
+                data={
+                    # Local service expects the image URL as form-data, e.g.:
+                    # curl -X POST .../analyze -F "image_url=https://example.com/test.jpg"
+                    "image_url": image_url
+                }
             )
             response.raise_for_status()
             data = response.json()
