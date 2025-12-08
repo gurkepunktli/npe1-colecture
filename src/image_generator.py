@@ -243,6 +243,17 @@ class ImageGenerator:
                     img_base64 = part.inline_data.data
                     mime_type = part.inline_data.mime_type or "image/jpeg"
 
+                    # Debug: Check if data is bytes or string
+                    print(f"[Google AI Studio SDK] Data type: {type(img_base64)}")
+                    print(f"[Google AI Studio SDK] Data length: {len(img_base64)}")
+                    print(f"[Google AI Studio SDK] MIME type: {mime_type}")
+
+                    # If data is bytes, encode to base64 string
+                    if isinstance(img_base64, bytes):
+                        import base64
+                        img_base64 = base64.b64encode(img_base64).decode('utf-8')
+                        print(f"[Google AI Studio SDK] Converted bytes to base64 (length: {len(img_base64)})")
+
                     # Return as data URL
                     data_url = f"data:{mime_type};base64,{img_base64}"
                     print(f"[Google AI Studio SDK] Generated image (data URL, {len(data_url)} chars)")
