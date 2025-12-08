@@ -43,3 +43,14 @@ class Config(BaseModel):
 
 
 config = Config()
+
+# Log API key status at startup
+print("=" * 50)
+print("API Keys Configuration Status:")
+print(f"  OPENROUTER_API_KEY: {'✓ set' if config.openrouter_api_key else '✗ missing'}")
+print(f"  UNSPLASH_ACCESS_KEY: {'✓ set' if config.unsplash_access_key else '✗ missing'}")
+print(f"  PEXELS_API_KEY: {'✓ set' if config.pexels_api_key else '✗ missing'}")
+print(f"  FLUX_API_KEY: {'✓ set' if config.flux_api_key else '✗ missing'}")
+print(f"  GOOGLE_AI_STUDIO_API_KEY: {'✓ set (length: ' + str(len(config.google_ai_studio_api_key)) + ')' if config.google_ai_studio_api_key else '✗ missing'}")
+print(f"  SIGHTENGINE_API_USER: {'✓ set' if config.sightengine_api_user else '✗ missing'}")
+print("=" * 50)
