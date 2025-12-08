@@ -3,7 +3,7 @@
 AI-powered image finder and generator for PowerPoint slides. Takes slide text, extracts visual keywords, searches stock photos, scores quality/safety, and falls back to AI image generation.
 
 ## Overview
-- Pipeline: Extract keywords -> search Unsplash/Pexels -> score quality/safety/presentation fit -> generate via Flux/Banana (Gemini image) if needed -> return best image.
+- Pipeline: Extract keywords -> search Unsplash/Pexels -> score quality/safety/presentation fit -> generate via Banana (Gemini image; auto/flux are routed here) if needed -> return best image.
 - FastAPI with Swagger UI (`/docs`).
 - LLM via OpenRouter (Gemini/Claude); quality/safety via SightEngine; optional presentation scoring service.
 
@@ -30,7 +30,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
   "ImageKeywords": ["technology", "innovation"],   // optional, overrides auto extraction
   "style": "flat_illustration",                    // style or scenario key
   "image_mode": "auto",                            // stock_only | ai_only | auto
-  "ai_model": "auto",                              // auto (=flux), flux, banana/imagen
+  "ai_model": "auto",                              // auto/flux -> banana (Gemini), banana/imagen
   "colors": { "primary": "#0066CC", "secondary": "#00CC66" }
 }
 ```
@@ -46,12 +46,12 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - `ImageKeywords` array (optional; overrides extraction)
 - `style` string (optional; scenario keys: `flat_illustration`, `fine_line`, `photorealistic`)
 - `image_mode` `stock_only` | `ai_only` | `auto` (default)
-- `ai_model` `auto` (=flux), `flux`, `imagen/banana` (default: auto)
+- `ai_model` `auto`/`flux` (both route to banana), `imagen/banana` (default: auto)
 - `colors` object optional `{ "primary": "...", "secondary": "..." }`
 
 ### Image Modes & Sources
 - Modes: `stock_only` (only stock), `ai_only` (only AI), `auto` (stock then AI fallback)
-- Response `source`: `stock_unsplash`, `stock_pexels`, `generated_flux`, `generated_imagen`, `none`, `failed`
+- Response `source`: `stock_unsplash`, `stock_pexels`, `generated_banana`, `generated_imagen`, `none`, `failed`
 
 ## Architecture
 - `src/config.py` - configuration/env
@@ -59,7 +59,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - `src/keyword_extractor.py` - LLM keyword extraction
 - `src/image_search.py` - Unsplash/Pexels
 - `src/image_scorer.py` - quality/safety/presentation scoring
-- `src/image_generator.py` - Flux/Gemini image
+- `src/image_generator.py` - Banana/Gemini image (auto/flux routed to banana)
 - `src/orchestrator.py` - pipeline orchestration
 - `src/api.py` - FastAPI endpoints
 - `src/generated_cache.py` - in-memory cache for data URLs/downloads
@@ -73,8 +73,8 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - Wenn Stock geeignet: bestes Bild, URL im Log
 - Sonst KI:
   - Prompt-Bau (OpenRouter LLM, Szenario/Style/Colors, Negativ-Prompt)
-  - Flux (api.eu.bfl.ai/v1/{FLUX_MODEL}); bei flat_illustration: Banana (Imagen)
-  - Polling, Download, Cache unter `/generated/{id}` (mit `PUBLIC_BASE_URL`, sonst Fallback)
+  - Banana (Gemini Image via OpenRouter); auto/flux werden hierhin gemappt
+  - Data-URLs werden gecached unter `/generated/{id}` (mit `PUBLIC_BASE_URL`, sonst Fallback); Banana-HTTP-Links gehen direkt zurück
 - Nudity-Check auf generiertem Bild (SightEngine, skip bei Quota/Fehler)
 - Bei unsafe (< `MIN_NUDITY_SAFE_SCORE`): ein Retry mit Banana
 - Fallback bei Fehler: `/static/error.png`
@@ -88,8 +88,8 @@ participant "Orchestrator\norchestrator.py" as ORCH
 participant "KeywordExtractor\n(OpenRouter LLM)\nkeyword_extractor.py" as KE
 participant "ImageSearcher\n(Unsplash/Pexels)\nimage_search.py" as IS
 participant "ImageScorer\n(SightEngine, optional scoring svc)\nimage_scorer.py" as ISC
-participant "ImageGenerator\n(Flux/Banana via OpenRouter)\nimage_generator.py" as IG
-participant "Flux/Banana\nAPI" as FLUX
+participant "ImageGenerator\n(Banana via OpenRouter)\nimage_generator.py" as IG
+participant "Banana/Gemini\nAPI" as BANANA
 participant "SightEngine\n(nudity)" as SE
 participant "Cache\ngenerated_cache.py" as CACHE
 
@@ -121,19 +121,16 @@ else proceed
     end
   else ai path
     ORCH -> IG: generate_from_keywords(keywords,\nmodel=auto/flux/banana,\nstyle/colors/slide)\n(OpenRouter LLM prompt build)
-    IG -> FLUX: submit+poll (if flux/auto)\n(https://api.eu.bfl.ai/v1/{FLUX_MODEL})
-    FLUX --> IG: image URL or data:
+    IG -> BANANA: request image (auto/flux/banana -> Banana/Gemini)
+    BANANA --> IG: image URL or data:
     IG --> ORCH: image_url
 
     alt image_url present
       alt data:
         ORCH -> CACHE: store_data_url
         CACHE --> ORCH: /generated/{id}
-      else flux HTTP
-        ORCH -> FLUX: download image
-        FLUX --> ORCH: bytes
-        ORCH -> CACHE: store_bytes
-        CACHE --> ORCH: /generated/{id}
+      else http link
+        ORCH -> ORCH: return Banana URL (no cache)
       end
       ORCH -> SE: nudity check (SightEngine)\n(best effort, skip on quota)
       SE --> ORCH: score or error/limit
@@ -154,7 +151,7 @@ end
 ## Troubleshooting
 - 401/403 stock: check Unsplash/Pexels keys.
 - Empty/failed: check logs, consider lowering thresholds, disable presentation scoring (`SCORING_SERVICE_URL`).
-- No image from AI: check Flux/Gemini key; set `PUBLIC_BASE_URL` for external access; review Flux submit/poll logs.
+ - No image from AI: check OpenRouter (Banana/Gemini) key; set `PUBLIC_BASE_URL` for external access; review generation logs.
 
 ## License
 TBD

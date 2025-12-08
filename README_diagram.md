@@ -6,8 +6,8 @@ participant "Orchestrator\norchestrator.py" as ORCH
 participant "KeywordExtractor\n(OpenRouter LLM)\nkeyword_extractor.py" as KE
 participant "ImageSearcher\n(Unsplash/Pexels)\nimage_search.py" as IS
 participant "ImageScorer\n(SightEngine, optional scoring svc)\nimage_scorer.py" as ISC
-participant "ImageGenerator\n(Flux/Banana via OpenRouter)\nimage_generator.py" as IG
-participant "Flux/Banana\nAPI" as FLUX
+participant "ImageGenerator\n(Banana via OpenRouter)\nimage_generator.py" as IG
+participant "Banana/Gemini\nAPI" as BANANA
 participant "SightEngine\n(nudity)" as SE
 participant "Cache\ngenerated_cache.py" as CACHE
 
@@ -39,19 +39,16 @@ else proceed
     end
   else ai path
     ORCH -> IG: generate_from_keywords(keywords,\nmodel=auto/flux/banana,\nstyle/colors/slide)\n(OpenRouter LLM prompt build)
-    IG -> FLUX: submit+poll (if flux/auto)\n(https://api.eu.bfl.ai/v1/{FLUX_MODEL})
-    FLUX --> IG: image URL or data:
+    IG -> BANANA: request image (auto/flux/banana -> Banana/Gemini)
+    BANANA --> IG: image URL or data:
     IG --> ORCH: image_url
 
     alt image_url present
       alt data:
         ORCH -> CACHE: store_data_url
         CACHE --> ORCH: /generated/{id}
-      else flux HTTP
-        ORCH -> FLUX: download image
-        FLUX --> ORCH: bytes
-        ORCH -> CACHE: store_bytes
-        CACHE --> ORCH: /generated/{id}
+      else http link
+        ORCH -> ORCH: return Banana URL (no cache)
       end
       ORCH -> SE: nudity check (SightEngine)\n(best effort, skip on quota)
       SE --> ORCH: score or error/limit

@@ -146,19 +146,21 @@ class ImageOrchestrator:
         Returns:
             Image result with generated image URL
         """
-        print(f"Generating image with {slide.ai_model} for: {keywords}")
+        requested_model = slide.ai_model
+        style_key = (slide.style or "").lower()
+
+        # Select model: auto/flux are routed to banana; "flat_illustration" forces banana; otherwise pass through.
+        ai_model = requested_model
+        if ai_model in ("auto", "flux"):
+            ai_model = "banana"
+        if style_key == "flat_illustration":
+            ai_model = "banana"
+
+        print(f"Generating image with {ai_model} (requested: {requested_model}) for: {keywords}")
         if slide.style:
             print(f"  Style: {slide.style}")
         if slide.colors:
             print(f"  Colors: primary={slide.colors.primary}, secondary={slide.colors.secondary}")
-
-        # Select model: "banana" stays banana; "auto" defaults to flux; "flat_illustration" forces banana; otherwise pass through.
-        ai_model = slide.ai_model
-        if ai_model == "auto":
-            ai_model = "flux"
-        style_key = (slide.style or "").lower()
-        if style_key == "flat_illustration":
-            ai_model = "banana"
 
         image_url = await self.image_generator.generate_from_keywords(
             keywords=keywords,
@@ -236,7 +238,7 @@ class ImageOrchestrator:
                     print("Retry generation with banana failed")
 
             print(f"Generated image: {served_url}")
-            source = f"generated_{slide.ai_model}"
+            source = f"generated_{ai_model}"
             return ImageResult(
                 url=served_url,
                 source=source,
