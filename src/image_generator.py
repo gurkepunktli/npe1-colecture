@@ -11,7 +11,12 @@ from google.genai import types
 
 from .config import config
 from .models import ColorConfig, SlideInput
-from .prompts import SCENARIO_PROMPTS, GENERATION_PROMPT_SYSTEM, NEGATIVE_PROMPT
+from .prompts import (
+    SCENARIO_CONFIGS,
+    SCENARIO_PROMPTS,
+    GENERATION_PROMPT_SYSTEM,
+    NEGATIVE_PROMPT
+)
 
 
 class ImageGenerator:
@@ -36,7 +41,7 @@ class ImageGenerator:
         if not style:
             return None
         key = style.lower().strip()
-        if key in SCENARIO_PROMPTS:
+        if key in SCENARIO_CONFIGS:
             return key
         return None
 
@@ -50,6 +55,9 @@ class ImageGenerator:
         """
         Create an image generation prompt from keywords, style, and colors.
 
+        For scenario-based styles (flat_illustration, fine_line, photorealistic):
+        Combines content_prompt + style_prompt + layout_prompt from SCENARIO_CONFIGS.
+
         Args:
             keywords: Keywords describing the desired image
             style: Style attribute or scenario key (e.g., "minimal" or "flat_illustration")
@@ -57,21 +65,47 @@ class ImageGenerator:
             slide: Slide payload (for scenario-driven prompting)
 
         Returns:
-            Generated prompt for image generation
+            Generated prompt for image generation (content + style + layout)
         """
         self.last_error = None
         try:
             scenario = self._select_scenario(style)
             if scenario:
+                # Get scenario configuration
+                scenario_config = SCENARIO_CONFIGS[scenario]
+
+                # Step 1: Generate content prompt using LLM
                 slide_payload = slide.model_dump() if slide else {"keywords": keywords}
                 prompt_template = ChatPromptTemplate.from_messages([
-                    ("system", SCENARIO_PROMPTS[scenario]),
+                    ("system", scenario_config["content_prompt_instructions"]),
                     ("human", "{slide_json}")
                 ])
                 chain = prompt_template | self.llm | StrOutputParser()
-                prompt = await chain.ainvoke({"slide_json": json.dumps(slide_payload)})
-                return prompt.strip()
+                content_prompt = await chain.ainvoke({"slide_json": json.dumps(slide_payload)})
+                content_prompt = content_prompt.strip()
 
+                # Step 2: Combine with style and layout prompts
+                # Apply color customization to style/layout if provided
+                style_prompt = scenario_config["style_prompt"]
+                layout_prompt = scenario_config["layout_prompt"]
+
+                if colors:
+                    # Replace default colors with custom colors if provided
+                    if colors.primary:
+                        style_prompt = style_prompt.replace("#125456", colors.primary)
+                        layout_prompt = layout_prompt.replace("#125456", colors.primary)
+                    if colors.secondary:
+                        style_prompt = style_prompt.replace("#F2C945", colors.secondary)
+                        layout_prompt = layout_prompt.replace("#F2C945", colors.secondary)
+                    if colors.primary or colors.secondary:
+                        # Also update background tint if colors are customized
+                        layout_prompt = layout_prompt.replace("#F9F8F7", colors.secondary or "#F9F8F7")
+
+                # Combine all parts
+                full_prompt = f"{content_prompt} {style_prompt} {layout_prompt}".strip()
+                return full_prompt
+
+            # Fallback: Non-scenario mode (legacy behavior)
             # Build style instruction
             style_instruction = ""
             if style:
@@ -402,9 +436,24 @@ class ImageGenerator:
             URL of generated image or None if failed
         """
         self.last_error = None
+
+        # Generate content + style + layout prompt
         prompt = await self.create_generation_prompt(keywords, style, colors, slide)
-        final_prompt = f"{prompt} {NEGATIVE_PROMPT}".strip()
-        print(f"Generated prompt for {model}: {final_prompt}")
+
+        # Add scenario-specific negative prompt (or global fallback)
+        scenario = self._select_scenario(style)
+        if scenario and scenario in SCENARIO_CONFIGS:
+            negative_prompt = SCENARIO_CONFIGS[scenario]["negative_prompt"]
+        else:
+            negative_prompt = NEGATIVE_PROMPT
+
+        final_prompt = f"{prompt} {negative_prompt}".strip()
+
+        print(f"Generated prompt for {model}:")
+        print(f"  Content+Style+Layout: {prompt}")
+        print(f"  Negative: {negative_prompt}")
+        print(f"  Final: {final_prompt}")
+
         url = await self.generate_image(final_prompt, model, width, height)
         if url is None and self.last_error is None:
             self.last_error = "Image generation returned no result"
