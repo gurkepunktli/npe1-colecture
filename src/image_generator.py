@@ -2,8 +2,6 @@
 import httpx
 import asyncio
 import json
-import base64
-from io import BytesIO
 from typing import Optional, Literal
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -238,15 +236,15 @@ class ImageGenerator:
             print(f"[Google AI Studio SDK] Response received")
 
             # Extract image from response
+            # The SDK returns base64-encoded image data in part.inline_data
             for part in response.parts:
-                if image := part.as_image():
-                    # Convert PIL Image to base64 data URL
-                    buffer = BytesIO()
-                    image.save(buffer, format="JPEG")
-                    img_bytes = buffer.getvalue()
-                    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+                if part.inline_data is not None:
+                    # Access the base64 data directly (already encoded)
+                    img_base64 = part.inline_data.data
+                    mime_type = part.inline_data.mime_type or "image/jpeg"
 
-                    data_url = f"data:image/jpeg;base64,{img_base64}"
+                    # Return as data URL
+                    data_url = f"data:{mime_type};base64,{img_base64}"
                     print(f"[Google AI Studio SDK] Generated image (data URL, {len(data_url)} chars)")
                     return data_url
 
