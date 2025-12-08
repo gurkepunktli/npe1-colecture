@@ -17,6 +17,7 @@ class Config(BaseModel):
     sightengine_api_user: str = os.getenv("SIGHTENGINE_API_USER", "")
     sightengine_api_secret: str = os.getenv("SIGHTENGINE_API_SECRET", "")
     flux_api_key: str = os.getenv("FLUX_API_KEY", "")
+    google_ai_studio_api_key: str = os.getenv("GOOGLE_AI_STUDIO_API_KEY", "")
     # FLUX model endpoint path (e.g., "flux-2-pro", "flux-2-flex", "flux-pro-1.1")
     flux_model: str = os.getenv("FLUX_MODEL", "flux-2-pro")
 

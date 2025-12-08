@@ -27,7 +27,7 @@ class SlideInput(BaseModel):
     style: Optional[str] = None  # e.g., "modern" or scenario key
     image_mode: Literal["stock_only", "ai_only", "auto"] = "auto"
     colors: Optional[ColorConfig] = None
-    ai_model: Literal["auto", "flux", "banana", "imagen"] = "auto"
+    ai_model: Literal["auto", "flux", "banana", "imagen", "google_banana"] = "auto"
 
 
 class KeywordExtractionResult(BaseModel):

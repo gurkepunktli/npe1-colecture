@@ -182,6 +182,94 @@ class ImageGenerator:
             print(msg)
             return None
 
+    async def generate_with_google_ai_studio(
+        self,
+        prompt: str,
+        width: int = 1024,
+        height: int = 1024
+    ) -> Optional[str]:
+        """
+        Generate an image using Google AI Studio with Gemini 3 Pro Image (Nano Banana Pro).
+
+        Args:
+            prompt: Text prompt for generation
+            width: Image width (unused, kept for parity)
+            height: Image height (unused, kept for parity)
+
+        Returns:
+            Data URL of generated image or None if failed
+        """
+        try:
+            self.last_error = None
+
+            # Google AI Studio endpoint for Gemini 3 Pro Image (Nano Banana Pro)
+            endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent"
+
+            payload = {
+                "contents": [{
+                    "parts": [{
+                        "text": prompt
+                    }]
+                }],
+                "generationConfig": {
+                    "responseMimeType": "image/jpeg"
+                }
+            }
+
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    endpoint,
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": config.google_ai_studio_api_key
+                    },
+                    json=payload
+                )
+
+                print(f"[Google AI Studio] status={response.status_code}")
+                response.raise_for_status()
+
+                data = response.json()
+
+                # Extract inline data from response
+                candidates = data.get("candidates", [])
+                if not candidates:
+                    self.last_error = "No candidates returned from Google AI Studio"
+                    return None
+
+                parts = candidates[0].get("content", {}).get("parts", [])
+                if not parts:
+                    self.last_error = "No parts in Google AI Studio response"
+                    return None
+
+                inline_data = parts[0].get("inlineData")
+                if not inline_data:
+                    self.last_error = "No inlineData in Google AI Studio response"
+                    return None
+
+                mime_type = inline_data.get("mimeType", "image/jpeg")
+                data_bytes = inline_data.get("data")
+
+                if not data_bytes:
+                    self.last_error = "No data in Google AI Studio inlineData"
+                    return None
+
+                # Return as data URL
+                data_url = f"data:{mime_type};base64,{data_bytes}"
+                print(f"[Google AI Studio] Generated image (data URL, {len(data_url)} chars)")
+                return data_url
+
+        except httpx.HTTPStatusError as e:
+            msg = f"Google AI Studio HTTP error: {e.response.status_code} - {e.response.text[:500]}"
+            self.last_error = msg
+            print(msg)
+            return None
+        except Exception as e:
+            msg = f"Google AI Studio generation failed: {e}"
+            self.last_error = msg
+            print(msg)
+            return None
+
     async def generate_with_imagen(
         self,
         prompt: str,
@@ -260,7 +348,7 @@ class ImageGenerator:
     async def generate_image(
         self,
         prompt: str,
-        model: Literal["auto", "flux", "banana", "imagen"] = "auto",
+        model: Literal["auto", "flux", "banana", "imagen", "google_banana"] = "auto",
         width: int = 1024,
         height: int = 1024
     ) -> Optional[str]:
@@ -269,7 +357,7 @@ class ImageGenerator:
 
         Args:
             prompt: Text prompt for generation
-            model: AI model to use ("flux" or "imagen")
+            model: AI model to use ("auto", "flux", "banana", "imagen", "google_banana")
             width: Image width
             height: Image height
 
@@ -281,6 +369,8 @@ class ImageGenerator:
             return await self.generate_with_flux(prompt, width, height)
         elif model in ("banana", "imagen"):
             return await self.generate_with_imagen(prompt, width, height)
+        elif model == "google_banana":
+            return await self.generate_with_google_ai_studio(prompt, width, height)
         else:
             print(f"Unknown model: {model}")
             self.last_error = f"Unknown model: {model}"
@@ -289,7 +379,7 @@ class ImageGenerator:
     async def generate_from_keywords(
         self,
         keywords: str,
-        model: Literal["auto", "flux", "banana", "imagen"] = "auto",
+        model: Literal["auto", "flux", "banana", "imagen", "google_banana"] = "auto",
         style: Optional[str] = None,
         colors: Optional[ColorConfig] = None,
         width: int = 1024,
@@ -301,7 +391,7 @@ class ImageGenerator:
 
         Args:
             keywords: Keywords describing the desired image
-            model: AI model to use ("flux" or "imagen")
+            model: AI model to use ("auto", "flux", "banana", "imagen", "google_banana")
             style: Style attributes
             colors: Color configuration
             width: Image width

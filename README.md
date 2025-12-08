@@ -8,7 +8,7 @@ AI-powered image finder and generator for PowerPoint slides. Takes slide text, e
 - LLM via OpenRouter (Gemini/Claude); quality/safety via SightEngine; optional presentation scoring service.
 
 ## Required API Keys
-`OPENROUTER_API_KEY`, `UNSPLASH_ACCESS_KEY`, `PEXELS_API_KEY`, `SIGHTENGINE_API_USER`, `SIGHTENGINE_API_SECRET`, `FLUX_API_KEY`
+`OPENROUTER_API_KEY`, `UNSPLASH_ACCESS_KEY`, `PEXELS_API_KEY`, `SIGHTENGINE_API_USER`, `SIGHTENGINE_API_SECRET`, `FLUX_API_KEY`, `GOOGLE_AI_STUDIO_API_KEY`
 
 Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, `MIN_NUDITY_SAFE_SCORE`, `PUBLIC_BASE_URL`, `OPENROUTER_REFERER`, `OPENROUTER_TITLE`, `FLUX_MODEL`
 
@@ -30,7 +30,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
   "ImageKeywords": ["technology", "innovation"],   // optional, overrides auto extraction
   "style": "flat_illustration",                    // style or scenario key
   "image_mode": "auto",                            // stock_only | ai_only | auto
-  "ai_model": "auto",                              // auto/flux -> banana (Gemini), banana/imagen
+  "ai_model": "auto",                              // auto/flux -> banana (Gemini), banana/imagen, google_banana (AI Studio)
   "colors": { "primary": "#0066CC", "secondary": "#00CC66" }
 }
 ```
@@ -46,12 +46,12 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - `ImageKeywords` array (optional; overrides extraction)
 - `style` string (optional; scenario keys: `flat_illustration`, `fine_line`, `photorealistic`)
 - `image_mode` `stock_only` | `ai_only` | `auto` (default)
-- `ai_model` `auto`/`flux` (both route to banana), `imagen/banana` (default: auto)
+- `ai_model` `auto`/`flux` (both route to banana), `banana`/`imagen`, `google_banana` (Google AI Studio) (default: auto)
 - `colors` object optional `{ "primary": "...", "secondary": "..." }`
 
 ### Image Modes & Sources
 - Modes: `stock_only` (only stock), `ai_only` (only AI), `auto` (stock then AI fallback)
-- Response `source`: `stock_unsplash`, `stock_pexels`, `generated_banana`, `generated_imagen`, `none`, `failed`
+- Response `source`: `stock_unsplash`, `stock_pexels`, `generated_banana`, `generated_imagen`, `generated_google_banana`, `none`, `failed`
 
 ## Architecture
 - `src/config.py` - configuration/env
@@ -59,7 +59,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - `src/keyword_extractor.py` - LLM keyword extraction
 - `src/image_search.py` - Unsplash/Pexels
 - `src/image_scorer.py` - quality/safety/presentation scoring
-- `src/image_generator.py` - Banana/Gemini image (auto/flux routed to banana)
+- `src/image_generator.py` - Banana/Gemini image (auto/flux routed to banana), Google AI Studio (google_banana)
 - `src/orchestrator.py` - pipeline orchestration
 - `src/api.py` - FastAPI endpoints
 - `src/generated_cache.py` - in-memory cache for data URLs/downloads
@@ -73,7 +73,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - Wenn Stock geeignet: bestes Bild, URL im Log
 - Sonst KI:
   - Prompt-Bau (OpenRouter LLM, Szenario/Style/Colors, Negativ-Prompt)
-  - Banana (Gemini Image via OpenRouter); auto/flux werden hierhin gemappt
+  - Banana (Gemini Image via OpenRouter); auto/flux werden hierhin gemappt, oder Google AI Studio (google_banana mit Gemini 2.0 Flash Thinking)
   - Data-URLs werden gecached unter `/generated/{id}` (mit `PUBLIC_BASE_URL`, sonst Fallback); Banana-HTTP-Links gehen direkt zurück
 - Nudity-Check auf generiertem Bild (SightEngine, skip bei Quota/Fehler)
 - Bei unsafe (< `MIN_NUDITY_SAFE_SCORE`): ein Retry mit Banana
