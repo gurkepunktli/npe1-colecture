@@ -149,12 +149,12 @@ class ImageOrchestrator:
         requested_model = slide.ai_model
         style_key = (slide.style or "").lower()
 
-        # Select model: auto/flux are routed to banana; "flat_illustration" forces banana; otherwise pass through.
+        # Select model: auto/flux are routed to google_banana; "flat_illustration" forces google_banana; otherwise pass through.
         ai_model = requested_model
         if ai_model in ("auto", "flux"):
-            ai_model = "banana"
+            ai_model = "google_banana"
         if style_key == "flat_illustration":
-            ai_model = "banana"
+            ai_model = "google_banana"
 
         print(f"Generating image with {ai_model} (requested: {requested_model}) for: {keywords}")
         if slide.style:
@@ -204,12 +204,12 @@ class ImageOrchestrator:
             except Exception as exc:
                 print(f"Nudity check skipped/failed: {exc}")
 
-            # If unsafe, regenerate once with banana regardless of selected model
+            # If unsafe, regenerate once with google_banana regardless of selected model
             if nudity_score is not None and nudity_score < config.min_nudity_safe_score:
-                print("Generated image not safe enough, regenerating with banana")
+                print("Generated image not safe enough, regenerating with google_banana")
                 retry_url = await self.image_generator.generate_from_keywords(
                     keywords=keywords,
-                    model="banana",
+                    model="google_banana",
                     style=slide.style,
                     colors=slide.colors,
                     slide=slide
@@ -224,10 +224,10 @@ class ImageOrchestrator:
                         except Exception as exc:
                             print(f"Failed to cache retry data URL: {exc}")
                     else:
-                        # No download/cache for banana; return as is
+                        # No download/cache for google_banana; return as is
                         served_url = retry_url
-                    print(f"Regenerated image with banana: {served_url}")
-                    source = "generated_banana"
+                    print(f"Regenerated image with google_banana: {served_url}")
+                    source = "generated_google_banana"
                     return ImageResult(
                         url=served_url,
                         source=source,
@@ -235,7 +235,7 @@ class ImageOrchestrator:
                         error=None
                     )
                 else:
-                    print("Retry generation with banana failed")
+                    print("Retry generation with google_banana failed")
 
             print(f"Generated image: {served_url}")
             source = f"generated_{ai_model}"

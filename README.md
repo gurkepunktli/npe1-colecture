@@ -3,7 +3,7 @@
 AI-powered image finder and generator for PowerPoint slides. Takes slide text, extracts visual keywords, searches stock photos, scores quality/safety, and falls back to AI image generation.
 
 ## Overview
-- Pipeline: Extract keywords -> search Unsplash/Pexels -> score quality/safety/presentation fit -> generate via Banana (Gemini image; auto/flux are routed here) if needed -> return best image.
+- Pipeline: Extract keywords -> search Unsplash/Pexels -> score quality/safety/presentation fit -> generate via Google AI Studio (Nano Banana Pro; auto/flux are routed here) if needed -> return best image.
 - FastAPI with Swagger UI (`/docs`).
 - LLM via OpenRouter (Gemini/Claude); quality/safety via SightEngine; optional presentation scoring service.
 
@@ -30,7 +30,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
   "ImageKeywords": ["technology", "innovation"],   // optional, overrides auto extraction
   "style": "flat_illustration",                    // style or scenario key
   "image_mode": "auto",                            // stock_only | ai_only | auto
-  "ai_model": "auto",                              // auto/flux -> banana (Gemini), banana/imagen, google_banana (AI Studio)
+  "ai_model": "auto",                              // auto/flux -> google_banana (Nano Banana Pro), banana/imagen (OpenRouter)
   "colors": { "primary": "#0066CC", "secondary": "#00CC66" }
 }
 ```
@@ -46,7 +46,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - `ImageKeywords` array (optional; overrides extraction)
 - `style` string (optional; scenario keys: `flat_illustration`, `fine_line`, `photorealistic`)
 - `image_mode` `stock_only` | `ai_only` | `auto` (default)
-- `ai_model` `auto`/`flux` (both route to banana), `banana`/`imagen`, `google_banana` (Google AI Studio) (default: auto)
+- `ai_model` `auto`/`flux` (both route to google_banana), `banana`/`imagen` (OpenRouter), `google_banana` (AI Studio) (default: auto)
 - `colors` object optional `{ "primary": "...", "secondary": "..." }`
 
 ### Image Modes & Sources
@@ -59,7 +59,7 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - `src/keyword_extractor.py` - LLM keyword extraction
 - `src/image_search.py` - Unsplash/Pexels
 - `src/image_scorer.py` - quality/safety/presentation scoring
-- `src/image_generator.py` - Banana/Gemini image (auto/flux routed to banana), Google AI Studio (google_banana)
+- `src/image_generator.py` - Google AI Studio (Nano Banana Pro; auto/flux routed here), Banana/Gemini image (OpenRouter)
 - `src/orchestrator.py` - pipeline orchestration
 - `src/api.py` - FastAPI endpoints
 - `src/generated_cache.py` - in-memory cache for data URLs/downloads
@@ -73,10 +73,10 @@ Optional: `SCORING_SERVICE_URL`, `MIN_PRESENTATION_SCORE`, `MIN_QUALITY_SCORE`, 
 - Wenn Stock geeignet: bestes Bild, URL im Log
 - Sonst KI:
   - Prompt-Bau (OpenRouter LLM, Szenario/Style/Colors, Negativ-Prompt)
-  - Banana (Gemini Image via OpenRouter); auto/flux werden hierhin gemappt, oder Google AI Studio (google_banana mit Gemini 2.0 Flash Thinking)
+  - Google AI Studio (Nano Banana Pro mit Gemini 3 Pro Image); auto/flux werden hierhin gemappt, oder Banana (Gemini Image via OpenRouter)
   - Data-URLs werden gecached unter `/generated/{id}` (mit `PUBLIC_BASE_URL`, sonst Fallback); Banana-HTTP-Links gehen direkt zurück
 - Nudity-Check auf generiertem Bild (SightEngine, skip bei Quota/Fehler)
-- Bei unsafe (< `MIN_NUDITY_SAFE_SCORE`): ein Retry mit Banana
+- Bei unsafe (< `MIN_NUDITY_SAFE_SCORE`): ein Retry mit Google AI Studio (Nano Banana Pro)
 - Fallback bei Fehler: `/static/error.png`
 
 ## Sequence Diagram (PlantUML)
