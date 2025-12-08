@@ -198,8 +198,8 @@ class ImageOrchestrator:
             # Nudity check for generated images (skip on errors/quotas)
             nudity_score = None
             try:
-                nudity_data = await self.image_scorer.check_nudity_sightengine(served_url)
-                nudity_score = nudity_data.get("suggestive_classes", {}).get("cleavage_categories", {}).get("none", 1.0)
+                nudity_data = await self.image_scorer.check_nudity(served_url)
+                nudity_score = self.image_scorer.extract_nudity_safe_score(nudity_data)
                 print(f"Nudity score for generated image: {nudity_score}")
             except Exception as exc:
                 print(f"Nudity check skipped/failed: {exc}")

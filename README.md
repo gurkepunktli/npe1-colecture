@@ -328,6 +328,9 @@ Extract keywords from slide content without generating image.
 |----------|---------|-------------|
 | `PUBLIC_BASE_URL` | `https://langchain.gurk.li` | Public URL for serving generated images |
 | `SCORING_SERVICE_URL` | - | Optional presentation fit scoring service |
+| `NUDITY_SERVICE_URL` | `http://192.168.100.20:8101` | Preferred nudity analyzer endpoint (`/analyze`), SightEngine used only as fallback |
+| `NUDITY_SERVICE_THRESHOLD` | `0.5` | Threshold forwarded to the nudity analyzer |
+| `NUDITY_SERVICE_MODEL` | `ViT-L/14` | CLIP model forwarded to the nudity analyzer |
 | `MIN_PRESENTATION_SCORE` | `0.6` | Minimum presentation fit score (0-1) |
 | `MIN_QUALITY_SCORE` | `0.7` | Minimum image quality score (0-1) |
 | `MIN_NUDITY_SAFE_SCORE` | `0.99` | Minimum safety score (0-1) |
@@ -350,6 +353,9 @@ FLUX_API_KEY=xxxxx
 # Optional Config
 PUBLIC_BASE_URL=https://your-domain.com
 SCORING_SERVICE_URL=http://192.168.1.100:8000
+NUDITY_SERVICE_URL=http://192.168.100.20:8101
+NUDITY_SERVICE_THRESHOLD=0.5
+NUDITY_SERVICE_MODEL=ViT-L/14
 MIN_PRESENTATION_SCORE=0.6
 MIN_QUALITY_SCORE=0.7
 MIN_NUDITY_SAFE_SCORE=0.99

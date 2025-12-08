@@ -23,6 +23,9 @@ class Config(BaseModel):
 
     # Service URLs
     scoring_service_url: Optional[str] = os.getenv("SCORING_SERVICE_URL")
+    nudity_service_url: Optional[str] = os.getenv("NUDITY_SERVICE_URL", "http://192.168.100.20:8101")
+    nudity_service_threshold: float = float(os.getenv("NUDITY_SERVICE_THRESHOLD", "0.5"))
+    nudity_service_model: str = os.getenv("NUDITY_SERVICE_MODEL", "ViT-L/14")
 
     # OpenRouter metadata (optional but recommended by OpenRouter)
     openrouter_referer: Optional[str] = os.getenv("OPENROUTER_REFERER")
