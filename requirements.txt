@@ -8,3 +8,4 @@ pydantic>=2.0.0
 fastapi>=0.104.0
 uvicorn>=0.24.0
 httpx>=0.25.0
+google-genai>=1.51.0

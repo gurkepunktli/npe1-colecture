@@ -2,10 +2,14 @@
 import httpx
 import asyncio
 import json
+import base64
+from io import BytesIO
 from typing import Optional, Literal
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
+from google import genai
+from google.genai import types
 
 from .config import config
 from .models import ColorConfig, SlideInput
@@ -191,6 +195,8 @@ class ImageGenerator:
         """
         Generate an image using Google AI Studio with Gemini 3 Pro Image (Nano Banana Pro).
 
+        Uses the official google-genai Python SDK for better authentication and error handling.
+
         Args:
             prompt: Text prompt for generation
             width: Image width (unused, kept for parity)
@@ -202,74 +208,44 @@ class ImageGenerator:
         try:
             self.last_error = None
 
-            # Google AI Studio endpoint for Gemini 3 Pro Image (Nano Banana Pro)
-            # API key must be passed as x-goog-api-key header
-            endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent"
+            # Initialize Google GenAI client with API key
+            client = genai.Client(api_key=config.google_ai_studio_api_key)
 
-            payload = {
-                "contents": [{
-                    "parts": [{
-                        "text": prompt
-                    }]
-                }],
-                "generationConfig": {
-                    "imageConfig": {
-                        "aspectRatio": "1:1",
-                        "imageSize": "2K"
-                    }
-                }
-            }
-
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                response = await client.post(
-                    endpoint,
-                    headers={
-                        "Content-Type": "application/json",
-                        "x-goog-api-key": config.google_ai_studio_api_key
-                    },
-                    json=payload
+            # Generate image using official SDK
+            response = client.models.generate_content(
+                model="gemini-3-pro-image-preview",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_modalities=['IMAGE'],
+                    image_config=types.ImageConfig(
+                        aspect_ratio="1:1",
+                        image_size="2K"
+                    ),
                 )
+            )
 
-                print(f"[Google AI Studio] status={response.status_code}")
-                response.raise_for_status()
+            print(f"[Google AI Studio SDK] Response received")
 
-                data = response.json()
+            # Extract image from response
+            for part in response.parts:
+                if image := part.as_image():
+                    # Convert PIL Image to base64 data URL
+                    buffer = BytesIO()
+                    image.save(buffer, format="JPEG")
+                    img_bytes = buffer.getvalue()
+                    img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 
-                # Extract inline data from response
-                candidates = data.get("candidates", [])
-                if not candidates:
-                    self.last_error = "No candidates returned from Google AI Studio"
-                    return None
+                    data_url = f"data:image/jpeg;base64,{img_base64}"
+                    print(f"[Google AI Studio SDK] Generated image (data URL, {len(data_url)} chars)")
+                    return data_url
 
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if not parts:
-                    self.last_error = "No parts in Google AI Studio response"
-                    return None
-
-                inline_data = parts[0].get("inlineData")
-                if not inline_data:
-                    self.last_error = "No inlineData in Google AI Studio response"
-                    return None
-
-                mime_type = inline_data.get("mimeType", "image/jpeg")
-                data_bytes = inline_data.get("data")
-
-                if not data_bytes:
-                    self.last_error = "No data in Google AI Studio inlineData"
-                    return None
-
-                # Return as data URL
-                data_url = f"data:{mime_type};base64,{data_bytes}"
-                print(f"[Google AI Studio] Generated image (data URL, {len(data_url)} chars)")
-                return data_url
-
-        except httpx.HTTPStatusError as e:
-            msg = f"Google AI Studio HTTP error: {e.response.status_code} - {e.response.text[:500]}"
-            self.last_error = msg
-            print(msg)
+            # No image found in response
+            self.last_error = "No image found in Google AI Studio response"
+            print(f"[Google AI Studio SDK] {self.last_error}")
             return None
+
         except Exception as e:
-            msg = f"Google AI Studio generation failed: {e}"
+            msg = f"Google AI Studio SDK generation failed: {e}"
             self.last_error = msg
             print(msg)
             return None
