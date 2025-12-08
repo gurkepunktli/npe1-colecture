@@ -112,17 +112,16 @@ class ImageScorer:
             endpoint = f"{endpoint}/analyze"
 
         async with httpx.AsyncClient(timeout=60.0) as client:
+            payload = {"image_url": image_url}
+            # Service accepts threshold/model as form fields (curl -F), not query params
+            if config.nudity_service_threshold is not None:
+                payload["threshold"] = str(config.nudity_service_threshold)
+            if config.nudity_service_model:
+                payload["clip_model"] = config.nudity_service_model
+
             response = await client.post(
                 endpoint,
-                params={
-                    "threshold": config.nudity_service_threshold,
-                    "clip_model": config.nudity_service_model,
-                },
-                data={
-                    # Local service expects the image URL as form-data, e.g.:
-                    # curl -X POST .../analyze -F "image_url=https://example.com/test.jpg"
-                    "image_url": image_url
-                }
+                data=payload
             )
             response.raise_for_status()
             data = response.json()
