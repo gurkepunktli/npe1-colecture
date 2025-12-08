@@ -62,7 +62,16 @@ async def generate_image(slide: SlideInput):
         result = await orchestrator.process_slide(slide)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return error image instead of raising exception
+        print(f"API error: {e}")
+        base_url = getattr(config, "public_base_url", None) or "http://localhost:8080"
+        error_url = f"{base_url.rstrip('/')}/static/error.png"
+        return ImageResult(
+            url=error_url,
+            source="failed",
+            keywords="",
+            error=str(e)
+        )
 
 
 @app.get("/generate-image-simple", response_model=ImageResult)
@@ -105,7 +114,16 @@ async def generate_image_simple(
         result = await orchestrator.process_slide(slide)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return error image instead of raising exception
+        print(f"API error: {e}")
+        base_url = getattr(config, "public_base_url", None) or "http://localhost:8080"
+        error_url = f"{base_url.rstrip('/')}/static/error.png"
+        return ImageResult(
+            url=error_url,
+            source="failed",
+            keywords="",
+            error=str(e)
+        )
 
 
 @app.post("/extract-keywords")

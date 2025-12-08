@@ -203,6 +203,7 @@ class ImageGenerator:
             self.last_error = None
 
             # Google AI Studio endpoint for Gemini 3 Pro Image (Nano Banana Pro)
+            # API key must be passed as x-goog-api-key header
             endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent"
 
             payload = {
@@ -212,7 +213,10 @@ class ImageGenerator:
                     }]
                 }],
                 "generationConfig": {
-                    "responseMimeType": "image/jpeg"
+                    "imageConfig": {
+                        "aspectRatio": "1:1",
+                        "imageSize": "2K"
+                    }
                 }
             }
 
